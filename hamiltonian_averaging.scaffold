@@ -1,0 +1,23 @@
+// Testing implementation of Hamiltonian averaging for use in VQE algorithm
+
+int main() {
+  
+  // Initialize registers
+  qbit qreg[2];
+  cbit creg[2];
+
+  PrepZ(qreg[0],0);
+  PrepZ(qreg[1],0);
+
+  // Flip the state of the 2nd qubit
+  X(qreg[1]);
+  X(qreg[0]);
+  H(qreg[0]);
+  H(qreg[1]);
+  
+  // Measure both qubits
+  MeasZ(qreg[0]);
+  MeasZ(qreg[1]);
+
+  return 1;
+}
