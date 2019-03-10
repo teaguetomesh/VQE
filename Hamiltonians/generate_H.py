@@ -1,12 +1,22 @@
 from openfermion.hamiltonians import MolecularData
 from openfermion.transforms import get_fermion_operator, jordan_wigner, bravyi_kitaev
 
+
+def chooseH(x):
+    return {
+        'JW': jw_hamiltonians,
+        'BK': bk_hamiltonians
+    }.get(x, jw_hamiltonians)
+
+
 # Set molecule parameters.
 basis = 'sto-3g'
 multiplicity = 1
 bond_length_interval = 0.1
 n_points = 3
 name = 'LiH'
+numElectrons = 2
+transform = 'BK'
 
 # Generate molecule at different bond lengths.
 fr_hamiltonians = []
@@ -52,10 +62,12 @@ for point in range(3, n_points + 1):
   bk_hamiltonians += [qubit_hamiltonian_bk]
 
 # Write the resulting qubit H to file
-# For now, only considering the Bravyi-Kitaev transformations
+my_Hs = chooseH(transform)
 print('\n\n~~write Qubit Hamiltonian to file~~\n')
-H_file = open('qubitH_{0}_{1}_{2}.txt'.format(name, basis, description), 'w')
-for h in bk_hamiltonians:
+H_file = open('qubitH_{0}_{1}_{2}_{3}.txt'.format(name, basis, transform,
+              description), 'w')
+H_file.write('{0} {1}\n'.format(name, numElectrons))
+for h in my_Hs:
   hstring = '{}'.format(h)
   print(hstring)
   print('')
@@ -67,7 +79,7 @@ for h in bk_hamiltonians:
       paul = t2[1].split(']')[0]
       # Check for identity operator
       if paul is '':
-        paul = 'I'
+        paul = 'I0'
       
       # Write coefficients and operators to file
       H_file.write('{0:17s} {1}\n'.format(coef, paul))
