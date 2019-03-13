@@ -1,4 +1,5 @@
 '''
+Teague Tomesh - 3/13/2019
 
 Given a particular qubit Hamiltonian, measuring the expected energy of any
 given quantum state will depend only on the individual terms of that 
@@ -40,7 +41,7 @@ def genMeasureCircuit(H, Nq):
             if op[0] is 'I': continue
             quOpMatrix[int(op[1]), opDict[op[0]]] = 1
 
-    print(quOpMatrix)
+    #print(quOpMatrix)
 
     numCircs = 0
     for row in quOpMatrix:
@@ -62,10 +63,12 @@ def genMeasureCircuit(H, Nq):
     qr = QuantumRegister(Nq, name='qreg')
     cr = ClassicalRegister(Nq, name='creg')
     circ = QuantumCircuit(qr, cr)
+    name = ''
     for n in range(Nq):
       circ.measure(qr[n],cr[n])
-
-    circuitList += [circ]
+      name += 'Z'
+    
+    circuitList += [(circ, name)]
 
     return circuitList
 

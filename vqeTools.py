@@ -1,6 +1,9 @@
 '''
-This file contains functions which allow the optimizer to make calls to 
-construct and execute QuantumCircuits.
+Teague Tomesh - 3/13/2019
+
+These functions give the optimizer the ability to construct and execute
+QuantumCircuits in a programmatic fashion.
+
 '''
 
 import sys
@@ -90,6 +93,7 @@ def genMeasure(H, numQubits):
 # Measure the expected energy
 def hamiltonianAveraging(circList, H, Nq):
     '''
+    
     '''
     E = ha.run(circList, H, Nq)
     return E
@@ -108,95 +112,9 @@ def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit):
     
     return circList
 
-# Minimize the measured energy
-def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule,
-                    refCircuit, msrCircuit, optimizeModule):
-    '''
-    '''
-    initialparams = [rand.uniform(0,2*math.pi) for i in range(20)]
-
-    # Generate a circuit for the ansatz
-    ansCircuit = genAnsatz(ansatzModule, numQubits, initialparams)
-
-    circList = constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit)
-
-    # Energy integration
-    energy = hamiltonianAveraging(circList, hamiltonian, numQubits)
-    print(energy)
-
-'''
-# Main
-def main(argv):
-  
-  start_time = time.time()
-
-  hamPath = ''
-  refState = ''
-  ansatz = ''
-  optimizer = ''
-  numQubits = 4
-
-  try:
-   opts, args = getopt.getopt(argv,"p:r:a:q:",["hamiltonian=","reference=",
-   	                          "ansatz=","qubits=","optimizer="])
-  except getopt.GetoptError:
-    print ('Usage: \n ./vqeBlackBox.py -p <hamiltonian> -r <reference> \
-    	   -a <ansatz> -q <qubits> -o <optimizer>')
-    sys.exit(2)
-  for opt, arg in opts:
-    if opt == '-h':
-      print ('Usage: \n ./vqeBlackBox.py -p <hamiltonian> -r <reference>',
-             ' -a <ansatz> -q <qubits> -o <optimizer>')
-      sys.exit()
-    elif opt in ("-p", "--hamiltonian"):
-      hamPath = arg
-    elif opt in ("-r", "--reference"):
-      refState = arg
-    elif opt in ("-a", "--ansatz"):
-      ansatz = arg
-    elif opt in ("-q", "--qubits"):
-      numQubits = int(arg)
-    elif opt in ("-o", "--optimizer"):
-      optimizer = arg
-
-  print('\nHamiltonian: ',hamPath,'\nReference State: ',refState,
-  	'\nAnsatz: ',ansatz,'\n')
-
-  # Import the modules for the specified reference state, ansatz, and optimizer
-  refStateModule = importlib.import_module('.'+refState, package="ReferenceState")
-  ansatzModule = importlib.import_module('.'+ansatz, package="Ansatz")
-  optimizeModule = importlib.import_module('.'+optimizer, package="Optimizer")
-
-  # Parse the Hamiltonian file as a list of 2-tuples
-  # H = [(coef1, ops1), (coef2, ops2), (coef3, ops3), ...]
-  hamiltonian, molecule, numElectrons = parseHamiltonian(hamPath)
-
-  # Check that the number of qubits is sufficient to simulate this molecule
-  for term in hamiltonian:
-    for op in term[1]:
-        qIndex = int(op[1])
-        if qIndex + 1 > numQubits:
-            print("The number of qubits given is too small to simulate this \
-                molecule")
-            sys.exit()
-  
-  print('Current hamiltonian is: ', hamiltonian)
-
-  ### PRECOMPUTATION
-  # Generate a circuit for the reference state
-  refCircuit = genRefState(refStateModule, numQubits, numElectrons)
-
-  # Generate a circuit for measuring the energy
-  msrCircuit = genMeasure(hamiltonian, numQubits)
-
-  ### VQE
-  final_energy = minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule,
-                    refCircuit, msrCircuit, optimizeModule)
 
 
-if __name__ == "__main__":
-  main(sys.argv[1:])
-'''
+
 
 
 

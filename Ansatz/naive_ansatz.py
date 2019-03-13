@@ -1,4 +1,5 @@
 '''
+Teague Tomesh - 3/13/2019
 
 Implementation of a naive ansatz for use in the VQE algorithm.
 Adapted from [EPiQC VQE tutorial by Pranav Gokhale]
@@ -17,8 +18,8 @@ def genCircuit(M, p):
     '''
     '''
     if M is not 4:
-        print('ERROR: The naive ansatz is currently implemented for 4 qubits \
-            only')
+        print('ERROR: The naive ansatz is currently implemented for 4 qubits', 
+              ' only')
         sys.exit()
 
     # Initialize quantum register and circuit

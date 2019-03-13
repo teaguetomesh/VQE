@@ -1,4 +1,5 @@
 '''
+Teague Tomesh - 3/13/2019
 
 Implementation of the Hartree Fock reference state for use in the VQE algorithm.
 From [Li, Y. , Hu, J. , Zhang, X. , Song, Z. and Yung, M. (2019), 

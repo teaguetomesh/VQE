@@ -1,3 +1,12 @@
+'''
+Teague Tomesh - 3/13/2019
+
+Use the OpenFermion package to generate qubit Hamiltonians for a wide variety
+of different molecules, geometries, and fermion-qubit mappings. 
+
+'''
+
+
 from openfermion.hamiltonians import MolecularData
 from openfermion.transforms import get_fermion_operator, jordan_wigner, bravyi_kitaev
 
