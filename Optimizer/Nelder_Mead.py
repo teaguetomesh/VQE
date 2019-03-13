@@ -2,6 +2,18 @@
 Teague Tomesh - 3/13/2019
 
 Implementation of the Nelder-Mead optimization algorithm for VQE
+
+Based on the implementation found in 
+
+  "Press, William H., et al. Numerical recipes 3rd edition: 
+   The art of scientific computing. Cambridge university press, 2007."
+
+This implementation has been updated to interface with Qiskit for the
+generation and execution of quantum circuits.
+
+It should also be noted that all manipulation of the simplex parameters is 
+done (mod 2*pi).
+
 '''
 
 import vqeTools
@@ -26,7 +38,7 @@ def amoebatry(simplexM, y, psum, ihi, fac, func):
     fac1 = (1.0 - fac) / ndim
     fac2 = fac1 - fac
 
-    ptry = [psum[j]*fac1 - simplexM[ihi,j]*fac2 for j in range(ndim)]
+    ptry = [(psum[j]*fac1 - simplexM[ihi,j]*fac2)%math.tau for j in range(ndim)]
     
     # evaluate the trial point
     ytry = func(ptry)
@@ -35,15 +47,15 @@ def amoebatry(simplexM, y, psum, ihi, fac, func):
     if ytry < y[ihi]:
         y[ihi] = ytry
         for j in range(ndim):
-            psum[j] += ptry[j] - simplexM[ihi,j]
+            psum[j] = (psum[j] + ptry[j] - simplexM[ihi,j]) % math.tau
         simplexM[ihi] = ptry
 
     return ytry
 
 
 def nelder_mead(func, x_start,
-                delta=0.1, tol=10e-6,
-                no_improv_break=10, max_iter=5000):
+                delta=1.3, tol=10e-6,
+                no_improv_break=15, max_iter=5000):
     '''
     '''
 
@@ -59,7 +71,8 @@ def nelder_mead(func, x_start,
     for i in range(npts):
         for j in range(ndim):
             simplexM[i,j] = x_start[j]
-        if (i != 0): simplexM[i,i-1] += delta
+        if (i != 0): 
+            simplexM[i,i-1] = (simplexM[i,i-1] + delta) % math.tau
 
     y = np.zeros((npts))
     # compute func at each simplex point
@@ -69,7 +82,7 @@ def nelder_mead(func, x_start,
         y[i] = score
 
     prev_best = y[0]
-    psum = np.sum(simplexM, axis=0)
+    psum = np.mod(np.sum(simplexM, axis=0), math.tau)
 
     ### Loop ###
     while True:
@@ -121,13 +134,13 @@ def nelder_mead(func, x_start,
         if (ytry <= y[ilo]):
             # Got better result that our best point
             # Try another extrapolation with factor = 2
-            ytry = amoebatry(p,y,psum,ihi,2.0,func)
+            ytry = amoebatry(simplexM, y, psum, ihi, 2.0, func)
             nfunc += 1
         elif (ytry >= y[inhi]):
             # The reflected point is worse than the 2nd worst point
             # Do a one-dimensional contraction
             ysave = y[ihi]
-            ytry  = amoebatry(p,y,psum,ihi,0.5,func)
+            ytry  = amoebatry(simplexM, y, psum, ihi, 0.5, func)
             nfunc += 1
             if (ytry >= ysave):
                 # still not better
@@ -141,7 +154,7 @@ def nelder_mead(func, x_start,
                         y[i] = func(psum)
                         nfunc += 1
                 # recompute psum
-                psum = np.sum(simplexM, axis=0)
+                psum = np.mod(np.sum(simplexM, axis=0), math.tau)
         # Return to beginning of loop
     return 0
     
@@ -185,8 +198,10 @@ def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, ms
 
     ### Start of Nelder-Mead simplex optimization ###
     initialparams = [rand.uniform(0,2*math.pi) for i in range(20)]
+    return (initialparams, 82)
     final = nelder_mead(f, initialparams)
-
+    print('Best parameters: {}'.format(final[0]))
+    print('Best energy: {}'.format(final[1]))
     return final
 
 

@@ -22,22 +22,24 @@ def chooseH(x):
 basis = 'sto-3g'
 multiplicity = 1
 bond_length_interval = 0.1
-n_points = 3
-name = 'LiH'
+n_points = 25
+name = 'H2'
 numElectrons = 2
-transform = 'BK'
+transform = 'JW'
 
 # Generate molecule at different bond lengths.
 fr_hamiltonians = []
 jw_hamiltonians = []
 bk_hamiltonians = []
+descriptions = []
 bond_lengths = []
 for point in range(3, n_points + 1):
   bond_length = bond_length_interval * point
-  bond_length = 1.45
+  #bond_length = 1.45
   bond_lengths += [bond_length]
   description = str(round(bond_length,2))
-  geometry = [('Li', (0., 0., 0.)), ('H', (0., 0., bond_length))]
+  descriptions += [description]
+  geometry = [('H', (0., 0., 0.)), ('H', (0., 0., bond_length))]
   molecule = MolecularData(geometry, basis, multiplicity, description=description)
 
   # Load data.
@@ -48,7 +50,7 @@ for point in range(3, n_points + 1):
   # Get the Hamiltonian in an active space.
   # Set Hamiltonian parameters.
   active_space_start = 1
-  active_space_stop = 3
+  active_space_stop = 2
 
   molecular_hamiltonian = molecule.get_molecular_hamiltonian(
 		  occupied_indices=range(active_space_start),
@@ -72,11 +74,14 @@ for point in range(3, n_points + 1):
 
 # Write the resulting qubit H to file
 my_Hs = chooseH(transform)
-print('\n\n~~write Qubit Hamiltonian to file~~\n')
-H_file = open('qubitH_{0}_{1}_{2}_{3}.txt'.format(name, basis, transform,
-              description), 'w')
-H_file.write('{0} {1}\n'.format(name, numElectrons))
-for h in my_Hs:
+folder = '{}_{}_{}/'.format(name, basis, transform)
+for h, d in zip(my_Hs, descriptions):
+  print('\n\n~~write Qubit Hamiltonian to file~~\n')
+  fileName = 'qubitH_{0}_{1}_{2}_{3}.txt'.format(name, basis, transform, d)
+  print(folder+fileName)
+  H_file = open(folder+fileName, 'w')
+  H_file.write('{0} {1}\n'.format(name, numElectrons))
+#for h in my_Hs:
   hstring = '{}'.format(h)
   print(hstring)
   print('')
@@ -95,6 +100,6 @@ for h in my_Hs:
 
     else:
       print('ERROR: Something went wrong parsing string')
-H_file.close()
+  H_file.close()
 
 

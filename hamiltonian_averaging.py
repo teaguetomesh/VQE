@@ -51,10 +51,10 @@ def matchTermToCircuit(nameList, H, Nq):
 
     #nameList = ['ZZZZ','XXXX','XZXZ']
 
-    print(H)
+    #print(H)
 
     termStrings = ['' for i in range(len(H))]
-    print('empty TS: ',termStrings)
+    #print('empty TS: ',termStrings)
     # Construct a string which reflects the measurement needs of each term
     for n, t in enumerate(H):
         termString = ''
@@ -79,7 +79,7 @@ def matchTermToCircuit(nameList, H, Nq):
 
         termStrings[n] = termString
 
-    print('termStrings: ',termStrings)
+    #print('termStrings: ',termStrings)
 
     matching = {}
     termIndices = np.arange(1,len(H))
@@ -90,14 +90,14 @@ def matchTermToCircuit(nameList, H, Nq):
         for i, t in enumerate(termIndices):
             ts = termStrings[t]
             if match(circName, ts):
-                print('it matched!')
+                #print('it matched!')
                 matchedTerms += [t]
                 delList += [i]
         matching[circName] = matchedTerms
         termIndices = [e for i, e in enumerate(termIndices) if i not in delList]
-        print('del termIndices: ', termIndices)
+        #print('del termIndices: ', termIndices)
 
-    print('matching: ', matching)
+    #print('matching: ', matching)
 
     return matching, termStrings
 
@@ -139,7 +139,7 @@ def energyIntegration(H, terms, counts, termStrings):
                 E = coef1*(()+()+...)/#shots + coef2*(()+()+...)/#shots + ...
     '''
 
-    print('these are the terms: ', terms)
+    #print('these are the terms: ', terms)
 
     energySum = 0
     numShots = np.sum(list(counts.values()))
@@ -147,8 +147,8 @@ def energyIntegration(H, terms, counts, termStrings):
     for term in terms:
         coef = H[term][0]
         ts = termStrings[term]
-        print('coef: {}'.format(coef))
-        print('termString: {}'.format(ts))
+        #print('coef: {}'.format(coef))
+        #print('termString: {}'.format(ts))
 
         # for this term, average its energy contribution by counting the 
         # number of times it contributed +1 or -1
@@ -156,7 +156,7 @@ def energyIntegration(H, terms, counts, termStrings):
         for state in counts:
             count = counts[state]
             contrib = computeContrib(ts, state)
-            print(state, count, contrib)
+            #print(state, count, contrib)
             runningSum = runningSum + (contrib*count)
 
         # multiply by the term's coefficient
@@ -189,13 +189,13 @@ def run(circList, H, Nq):
     shots   = 1000
     simulator = Aer.get_backend('qasm_simulator')
     totalE = H[0][0]
-    print(totalE)
+    #print(totalE)
     for tup in circList:
       circ = tup[0]
       name = tup[1]
       result = execute(circ, simulator).result()
       counts = result.get_counts(circ)
-      print(counts)
+      #print(counts)
       
       #vis.state_histogram(counts,'Naive Ansatz Counts: {} shots'.format(shots))
 
