@@ -19,8 +19,6 @@ import glob
 
 # Main
 def main(argv):
-  
-  start_time = time.time()
 
   hamPath = ''
   refState = ''
@@ -53,6 +51,8 @@ def main(argv):
 
   print('\nHamiltonian: ',hamPath,'\nReference State: ',refState,
     '\nAnsatz: ',ansatz,'\nOptimizer: ',optimizer,'\n')
+
+  start_time = time.time()
 
   # Import the modules for the specified reference state, ansatz, and optimizer
   refStateModule = importlib.import_module('.'+refState, package="ReferenceState")
@@ -115,6 +115,8 @@ def main(argv):
     print('\tAchieved {} Ha at {} angstroms'.format(final_energy[1], rParam))
     results += [(rParam, final_energy)]
 
+  end_time = time.time()
+
   # After VQE is finished - write results to file
   for i, c in enumerate(hamPath):
     if c == '/':
@@ -128,6 +130,9 @@ def main(argv):
       writeStr += '\n'
       outf.write(writeStr)
 
+  elapsed_time = end_time - start_time
+  timestr = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+  print('Elapsed time: ', timestr)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
