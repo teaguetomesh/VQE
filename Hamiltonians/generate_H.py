@@ -22,7 +22,7 @@ def chooseH(x):
 basis = 'sto-3g'
 multiplicity = 1
 bond_length_interval = 0.1
-n_points = 25
+n_points = 30
 name = 'H2'
 numElectrons = 2
 transform = 'JW'
@@ -33,7 +33,7 @@ jw_hamiltonians = []
 bk_hamiltonians = []
 descriptions = []
 bond_lengths = []
-for point in range(3, n_points + 1):
+for point in range(1, n_points + 1):
   bond_length = bond_length_interval * point
   #bond_length = 1.45
   bond_lengths += [bond_length]
@@ -42,10 +42,10 @@ for point in range(3, n_points + 1):
   geometry = [('H', (0., 0., 0.)), ('H', (0., 0., bond_length))]
   molecule = MolecularData(geometry, basis, multiplicity, description=description)
 
-  # Load data.
+  # Load data
   molecule.load()
 
-  print('\nAt bond length of {} angstrom, molecular hydrogen has:'.format(bond_length))
+  print('\nAt bond length of {} angstrom, {} has:'.format(bond_length, name))
   
   # Get the Hamiltonian in an active space.
   # Set Hamiltonian parameters.
