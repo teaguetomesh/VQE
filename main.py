@@ -78,6 +78,7 @@ def main(argv):
     sortH = sorted(sortH, key=lambda hamil: hamil[0])
 
   results = []
+  prevParam = None
   for pair in sortH:
     rParam = pair[0]
     hPath = pair[1]
@@ -109,11 +110,13 @@ def main(argv):
     ### VQE ###
     print('--initiate {} optimization--'.format(optimizer))
     final_energy = optimizeModule.minimizeEnergyObjective(hamiltonian, numQubits,
-                                           ansatzModule, refCircuit, msrCircuit)
+                                           ansatzModule, refCircuit, msrCircuit,
+                                           prevParam)
 
     print('--optimization finished--')
-    print('\tAchieved {} Ha at {} angstroms'.format(final_energy[1], rParam))
+    print('\tAchieved {0:.7f} Ha at {1} angstroms'.format(final_energy[1], rParam))
     results += [(rParam, final_energy)]
+    prevParam = final_energy[0]
 
   end_time = time.time()
 

@@ -54,7 +54,7 @@ def amoebatry(simplexM, y, psum, ihi, fac, func):
 
 
 def nelder_mead(func, x_start,
-                delta=1.3, tol=10e-6,
+                delta=1.7, tol=10e-6,
                 no_improv_break=15, max_iter=5000):
     '''
     '''
@@ -110,7 +110,7 @@ def nelder_mead(func, x_start,
             return (simplexM[ilo], y[ilo])
         
         # Return if no improvment after no_improv_break iterations
-        print('Current iteration: {}, Num function calls: {}, best so far: {}\
+        print('Current iteration: {0}, Num function calls: {1}, best so far: {2:.7f}\
             '.format(niter, nfunc, best))
 
         if best < (prev_best - tol):
@@ -161,7 +161,8 @@ def nelder_mead(func, x_start,
 
 
 # Minimize the measured energy
-def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, msrCircuit):
+def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, msrCircuit,
+                            prevParam):
     '''
     Initialize parameters for and then call the Nelder-Mead optimization 
     function
@@ -197,10 +198,13 @@ def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, ms
 
 
     ### Start of Nelder-Mead simplex optimization ###
-    initialparams = [rand.uniform(0,2*math.pi) for i in range(20)]
+    if prevParam is None:
+        initialparams = [rand.uniform(0,2*math.pi) for i in range(20)]
+    else:
+        initialparams = prevParam
     final = nelder_mead(f, initialparams)
     print('Best parameters: {}'.format(final[0]))
-    print('Best energy: {}'.format(final[1]))
+    print('Best energy: {0:.7f}'.format(final[1]))
     return final
 
 
