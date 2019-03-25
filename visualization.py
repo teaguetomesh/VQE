@@ -93,7 +93,7 @@ def get_names(path):
         if c == '/':
             ir = i+1
             break
-    name = path[ir:-4]+'_PEC'
+    name = path[ir:-4]
     print(name)
     molName = ''
     for c in name:
@@ -127,7 +127,7 @@ def plotPEC(options, pecPath, terPath):
     fit_curve = options[3]
 
     # get molecule name and file name from the path
-    name, molName = get_names(pecPath)
+    savestr, molName = get_names(pecPath)
     titlestr = 'PEC for {}'.format(molName)
 
     if optimize_layer or iteration_layer:
@@ -136,6 +136,8 @@ def plotPEC(options, pecPath, terPath):
         titlestr += ' with {} optimization'.format(extraData[4][3])
     else:
         extraData = []
+
+    fciData = np.genfromtxt('Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt')
 
     # get the data from the file
     data = np.genfromtxt(pecPath)
@@ -147,11 +149,21 @@ def plotPEC(options, pecPath, terPath):
     ax.axhline(y=0, color='k', lw=0.6)
     
     # Plot the data
-    ax.scatter(r,E,c='b')
+    ax.plot(fciData[:,0],fciData[:,1],c='k',ls='--',label='FCI')
+    ax.scatter(r,E,c='b',label='Final Energy')
 
     if optimize_layer:
         # Plot the initial ansatz guesses
-        ax.scatter(extraData[0],extraData[1],s=4,c='r')
+        ax.scatter(extraData[0],extraData[1],s=6,c='r',label='Initial Energy')
+        savestr += '_wOpt'
+
+    if iteration_layer:
+        for x, y, numi in zip(r, E, extraData[2]):
+            ax.text(x, y-0.1,'{}'.format(numi), ha='center', va='top', 
+                fontsize='small', color='darkgrey', fontstyle='oblique',
+                fontweight='semibold')
+        ax.plot([],[],c='darkgrey',label='# Iterations')
+        savestr += '_wItr'
 
     if fit_curve:
         # Fit the data with Lennard Jones potential
@@ -163,6 +175,7 @@ def plotPEC(options, pecPath, terPath):
         yy = [LennardJones(x, 1, 0.75) for x in xx]
         plt.plot(xx,yy)
         
+    ax.legend(loc='best')
 
     plt.xlim(0,3.5)
     plt.ylim(-1.5,2)
@@ -173,7 +186,7 @@ def plotPEC(options, pecPath, terPath):
     
     if save: 
         # Save figure to file
-        savepath = 'Plots/'+name+'.png'
+        savepath = 'Plots/'+savestr+'.png'
         plt.savefig(savepath)
         print('Figure saved to: ',savepath)
     
@@ -181,29 +194,97 @@ def plotPEC(options, pecPath, terPath):
     plt.close()
 
 
+def plot_double():
+    '''
+    '''
+    path1 = 'Results/H2_sto-3g_JW_0.1_to_3.0_wPrevParam1.txt'
+    path2 = 'Results/H2_sto-3g_JW_0.1_to_3.0_try4.txt'
+    fciPath = 'Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt'
+
+    savestr, molName = get_names(path1)
+    savestr += '_vs_random_PEC'
+    titlestr = 'PEC for {}, Naive Ansatz, Nelder-Mead using previous best guess'.format(molName)
+
+    # get the data from the files
+    data1 = np.genfromtxt(path1)
+    r1 = data1[:,0]
+    E1 = data1[:,1]
+    data2 = np.genfromtxt(path2)
+    r2 = data2[:,0]
+    E2 = data2[:,1]
+    rcolor = 'SkyBlue'
+    pcolor = 'IndianRed'
+
+    # get FCI energy from file
+    fciData = np.genfromtxt(fciPath)
+    fciR = fciData[:,0]
+    fciE = fciData[:,1]
+
+    # Create the figure
+    fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8,8))
+    pecAx = ax[0]
+    errAx = ax[1]
+
+    # Plot PEC
+    pecAx.axhline(y=0, color='k', lw=0.6)
+    
+    # Plot the data
+    pecAx.plot(fciR,fciE,c='k',ls='--',label='FCI')
+    pecAx.scatter(r2,E2,c=rcolor,s=12,label='Random')
+    #ax.plot(r2,E2,lw=1,c='b')
+    pecAx.scatter(r1,E1,c=pcolor,s=12,label='PrevGuess')
+    #ax.plot(r1,E1,lw=1,c='r')
+
+    pecAx.set_xlim(0,3.1)
+    pecAx.set_ylim(-1.5,5)
+
+    pecAx.set_ylabel('Energy (Ha)')
+    pecAx.set_title(titlestr)
+    pecAx.legend(loc='best')
+
+    # Plot error with respect to FCI calculation
+    errAx.axhline(y=0, color='k', lw=0.6)
+    prevEDiff = [e1 - e2 for e1, e2 in zip(E1, fciE)]
+    randEDiff = [e1 - e2 for e1, e2 in zip(E2, fciE)]
+    width = 0.04
+    rects1 = errAx.bar(r1 - width/2, prevEDiff, width, color=pcolor)
+    rects2 = errAx.bar(r1 + width/2, randEDiff, width, color=rcolor)
+    errAx.axhline(y=1.6e-3, color='k', lw=1, ls='-.')
+    errAx.set_ylabel('Error wrt FCI energy (Ha)')
+    errAx.set_xlabel('Interatomic distance (angstroms)')
+    #errAx.set_ylim(0,0.1)
+
+    
+    # Save figure to file
+    savepath = 'Plots/'+savestr+'.png'
+    plt.savefig(savepath)
+    print('Figure saved to: ',savepath)
+    plt.show()
+    plt.close()
+
+
 # Main
 def main(argv):
 
-  pecPath = ''
-  terminalOutputPath = ''
   optimize_layer = False
   iteration_layer = False
   save_image = False
   fit_curve = False
+  vqe_name = ''
+  plot_pec = False
   
   try:
-   opts, args = getopt.getopt(argv,"siofp:t:",["pec=","terminal="])
+   opts, args = getopt.getopt(argv,"dsiofn:",["name="])
   except getopt.GetoptError:
-    print ('Usage: \n python visualization.py -p <pec> -t <terminal>')
+    print ('Usage: \n python visualization.py -dsiof -n <name>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-      print ('Usage: \n python visualization.py -p <pec> -t <terminal>')
+      print ('Usage: \n python visualization.py -dsiof -n <name>')
       sys.exit()
-    elif opt in ("-p", "--pec"):
-      pecPath = arg
-    elif opt in ("-t", "--terminal"):
-      terminalOutputPath = arg
+    elif opt in ("-n", "--name"):
+      vqe_name = arg
+      plot_pec = True
     elif opt in ("-i"):
       iteration_layer = True
     elif opt in ("-o"):
@@ -212,18 +293,23 @@ def main(argv):
       save_image = True
     elif opt in ("-f"):
       fit_curve = True
+    elif opt in ("-d"):
+      plot_double()
     
+  if plot_pec:
+    pecPath = 'Results/'+vqe_name
+    ns = vqe_name.split('_')
+    terminalOutputPath = 'Results/'+ns[0]+'_'+ns[1]+'_vqe_output_'+ns[-1]
+    print('\nPEC: ',pecPath,'\nTerminal Output: ',terminalOutputPath,'\n')
 
-  print('\nPEC: ',pecPath,'\nTerminal Output: ',terminalOutputPath,'\n')
+    options = [save_image, optimize_layer, iteration_layer, fit_curve]
+    print('Options:')
+    print(' Save: {}'.format(options[0]))
+    print(' Optimize_layer: {}'.format(options[1]))
+    print(' Iteration_layer: {}'.format(options[2]))
+    print(' Fit_curve: {}'.format(options[3]))
 
-  options = [save_image, optimize_layer, iteration_layer, fit_curve]
-  print('Options:')
-  print(' Save: {}'.format(options[0]))
-  print(' Optimize_layer: {}'.format(options[1]))
-  print(' Iteration_layer: {}'.format(options[2]))
-  print(' Fit_curve: {}'.format(options[3]))
-
-  plotPEC(options, pecPath, terminalOutputPath)
+    plotPEC(options, pecPath, terminalOutputPath)
 
   
 
