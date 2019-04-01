@@ -1,3 +1,6 @@
 papers_and_slides/
 Results/
 Plots/
+__pycache__/
+*/__pycache__/
+*.png

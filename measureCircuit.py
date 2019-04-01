@@ -64,6 +64,7 @@ def genMeasureCircuit(H, Nq):
     cr = ClassicalRegister(Nq, name='creg')
     circ = QuantumCircuit(qr, cr)
     name = ''
+    circ.barrier(qr)
     for n in range(Nq):
       circ.measure(qr[n],cr[n])
       name += 'Z'

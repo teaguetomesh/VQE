@@ -80,6 +80,7 @@ def main(argv):
   results = []
   prevParam = None
   for pair in sortH:
+    #### Begin Main VQE Loop ####
     rParam = pair[0]
     hPath = pair[1]
     # Parse the Hamiltonian file as a list of 2-tuples

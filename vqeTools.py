@@ -93,7 +93,7 @@ def genMeasure(H, numQubits):
 # Measure the expected energy
 def hamiltonianAveraging(circList, H, Nq):
     '''
-    
+
     '''
     E = ha.run(circList, H, Nq)
     return E
@@ -103,11 +103,12 @@ def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit):
     '''
     '''
     circList = []
-    for tup in msrCircuit:
+    for n, tup in enumerate(msrCircuit):
       mC = tup[0]
       name = tup[1]
       fullCirc = refCircuit + ansCircuit + mC
-      fullCirc.draw(filename='vqeCircuit', output='mpl')
+      #fullCirc.draw(scale=0.8, filename='vqeCirc_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
+      #  output='mpl', plot_barriers=False, reverse_bits=True)
       circList += [(fullCirc, name)]
     
     return circList

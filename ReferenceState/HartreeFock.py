@@ -27,4 +27,8 @@ def generateReferenceState(M, Ne):
     for n in range(Ne):
         circ.x(qr[n])
 
+    circ.barrier(qr)
+
+    #circ.draw(scale=0.5, filename='test_circuit', output='mpl', line_length=80, reverse_bits=True)
+
     return circ
