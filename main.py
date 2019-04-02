@@ -25,6 +25,7 @@ def main(argv):
   ansatz = ''
   optimizer = ''
   numQubits = 4
+  num_parameters = 0
 
   try:
    opts, args = getopt.getopt(argv,"p:r:a:q:o:",["hamiltonian=","reference=",
@@ -44,6 +45,10 @@ def main(argv):
       refState = arg
     elif opt in ("-a", "--ansatz"):
       ansatz = arg
+      if ansatz == 'naive_ansatz':
+        num_parameters = 20
+      elif ansatz == 'UCCSD_ansatz_4':
+        num_parameters = 7
     elif opt in ("-q", "--qubits"):
       numQubits = int(arg)
     elif opt in ("-o", "--optimizer"):
@@ -112,7 +117,7 @@ def main(argv):
     print('--initiate {} optimization--'.format(optimizer))
     final_energy = optimizeModule.minimizeEnergyObjective(hamiltonian, numQubits,
                                            ansatzModule, refCircuit, msrCircuit,
-                                           prevParam)
+                                           prevParam, num_parameters)
 
     print('--optimization finished--')
     print('\tAchieved {0:.7f} Ha at {1} angstroms'.format(final_energy[1], rParam))

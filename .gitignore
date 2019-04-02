@@ -3,3 +3,4 @@ Results/
 Plots/
 *pycache*
 *.png
+__pycache__/

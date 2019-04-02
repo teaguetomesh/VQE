@@ -94,6 +94,8 @@ def get_names(path):
             ir = i+1
             break
     name = path[ir:-4]
+    narr = name.split('.')
+    name = narr[0][:-2] + narr[2][1:]
     print(name)
     molName = ''
     for c in name:
@@ -128,14 +130,15 @@ def plotPEC(options, pecPath, terPath):
 
     # get molecule name and file name from the path
     savestr, molName = get_names(pecPath)
-    titlestr = 'PEC for {}'.format(molName)
+    r'$\alpha > \beta$'
+    if molName == 'H2':
+        mstr = r'$H_2$'
+    titlestr = 'PEC for '+mstr
 
-    if optimize_layer or iteration_layer:
-        print('~parsing terminal output~')
-        extraData = parse_terminal_output(terPath)
-        titlestr += ' with {} optimization'.format(extraData[4][3])
-    else:
-        extraData = []
+    print('~parsing terminal output~')
+    extraData = parse_terminal_output(terPath)
+    titlestr += ': {} & {}'.format(extraData[4][2].split('_')[0].capitalize(),
+                                   extraData[4][3].replace('_',' '))
 
     fciData = np.genfromtxt('Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt')
 
@@ -149,7 +152,7 @@ def plotPEC(options, pecPath, terPath):
     ax.axhline(y=0, color='k', lw=0.6)
     
     # Plot the data
-    ax.plot(fciData[:,0],fciData[:,1],c='k',ls='--',label='FCI')
+    ax.plot(fciData[:,0],fciData[:,1],c='k',ls=':',label='FCI')
     ax.scatter(r,E,c='b',label='Final Energy')
 
     if optimize_layer:
@@ -160,9 +163,8 @@ def plotPEC(options, pecPath, terPath):
     if iteration_layer:
         for x, y, numi in zip(r, E, extraData[2]):
             ax.text(x, y-0.1,'{}'.format(numi), ha='center', va='top', 
-                fontsize='small', color='darkgrey', fontstyle='oblique',
-                fontweight='semibold')
-        ax.plot([],[],c='darkgrey',label='# Iterations')
+                fontsize='small', color='dimgrey', fontstyle='oblique')
+        ax.plot([],[],c='dimgrey',label='# Iterations')
         savestr += '_wItr'
 
     if fit_curve:
@@ -180,8 +182,8 @@ def plotPEC(options, pecPath, terPath):
     plt.xlim(0,3.5)
     plt.ylim(-1.5,2)
 
-    plt.xlabel('Interatomic distance (angstroms)')
-    plt.ylabel('Energy (Ha)')
+    plt.xlabel(r'Interatomic distance ($\AA$)')    
+    plt.ylabel(r'$\langle H \rangle$ (Ha)')
     plt.title(titlestr)
     
     if save: 
@@ -197,13 +199,16 @@ def plotPEC(options, pecPath, terPath):
 def plot_double():
     '''
     '''
+
     path1 = 'Results/H2_sto-3g_JW_0.1_to_3.0_wPrevParam1.txt'
     path2 = 'Results/H2_sto-3g_JW_0.1_to_3.0_try4.txt'
     fciPath = 'Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt'
 
     savestr, molName = get_names(path1)
-    savestr += '_vs_random_PEC'
-    titlestr = 'PEC for {}, Naive Ansatz, Nelder-Mead using previous best guess'.format(molName)
+    savestr += '_vs_random_zoom'
+    if molName == 'H2':
+        mstr = r'$H_2$'
+    titlestr = 'PEC for '+mstr+', Nelder-Mead, PrevParam vs Random ansatz'
 
     # get the data from the files
     data1 = np.genfromtxt(path1)
@@ -229,16 +234,16 @@ def plot_double():
     pecAx.axhline(y=0, color='k', lw=0.6)
     
     # Plot the data
-    pecAx.plot(fciR,fciE,c='k',ls='--',label='FCI')
-    pecAx.scatter(r2,E2,c=rcolor,s=12,label='Random')
+    pecAx.plot(fciR,fciE,c='k',ls=':',label='FCI')
+    pecAx.scatter(r2,E2,c=rcolor,s=24,label='Random')
     #ax.plot(r2,E2,lw=1,c='b')
-    pecAx.scatter(r1,E1,c=pcolor,s=12,label='PrevGuess')
+    pecAx.scatter(r1,E1,c=pcolor,s=24,label='PrevParam')
     #ax.plot(r1,E1,lw=1,c='r')
 
     pecAx.set_xlim(0,3.1)
     pecAx.set_ylim(-1.5,5)
 
-    pecAx.set_ylabel('Energy (Ha)')
+    pecAx.set_ylabel(r'$\langle H \rangle$ (Ha)')
     pecAx.set_title(titlestr)
     pecAx.legend(loc='best')
 
@@ -249,10 +254,11 @@ def plot_double():
     width = 0.04
     rects1 = errAx.bar(r1 - width/2, prevEDiff, width, color=pcolor)
     rects2 = errAx.bar(r1 + width/2, randEDiff, width, color=rcolor)
-    errAx.axhline(y=1.6e-3, color='k', lw=1, ls='-.')
+    errAx.axhline(y=1.6e-3, color='k', lw=1, ls='-.', label='Chemical Accuracy')
     errAx.set_ylabel('Error wrt FCI energy (Ha)')
-    errAx.set_xlabel('Interatomic distance (angstroms)')
-    #errAx.set_ylim(0,0.1)
+    errAx.set_xlabel(r'Interatomic distance ($\AA$)')
+    errAx.legend(loc='upper right')
+    errAx.set_ylim(0,0.1)
 
     
     # Save figure to file
@@ -265,6 +271,20 @@ def plot_double():
 
 # Main
 def main(argv):
+
+  fontweight = 'normal'
+  plt.rcParams["font.weight"] = fontweight
+  plt.rcParams["axes.labelweight"] = fontweight
+  plt.rcParams["axes.titleweight"] = fontweight
+
+  # 'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'
+  fontsize = 12
+  plt.rcParams["font.size"] = fontsize
+  plt.rcParams["axes.labelsize"] = fontsize
+  plt.rcParams["axes.titlesize"] = fontsize
+  # 'serif' | 'sans-serif' | 'cursive' | 'fantasy' | 'monospace'
+  fontfamily = 'sans-serif'
+  plt.rcParams["font.family"] = fontfamily
 
   optimize_layer = False
   iteration_layer = False
