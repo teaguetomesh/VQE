@@ -198,10 +198,10 @@ def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, ms
 
 
     ### Start of Nelder-Mead simplex optimization ###
-    if prevParam is None:
-        initialparams = [rand.uniform(0,2*math.pi) for i in range(num_parameters)]
-    else:
-        initialparams = prevParam
+    #if prevParam is None:
+    initialparams = [rand.uniform(0,2*math.pi) for i in range(num_parameters)]
+    #else:
+    #    initialparams = prevParam
     final = nelder_mead(f, initialparams)
     print('Best parameters: {}'.format(final[0]))
     print('Best energy: {0:.7f}'.format(final[1]))
