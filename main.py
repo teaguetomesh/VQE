@@ -17,6 +17,22 @@ import vqeTools
 import glob
 
 
+def get_distance(h):
+  '''
+  Parse the Hamiltonian path to get the current separation distance (Angstroms)
+  '''
+  for i in range(len(h)-1,0,-1):
+    curChar = h[i]
+    found1 = False
+    if curChar == '.' and not found1:
+      ir = i+2
+      found1 = True
+    if curChar == '_':
+      il = i+1
+      break
+  return float(h[il:ir])
+
+
 # Main
 def main(argv):
 
@@ -26,18 +42,19 @@ def main(argv):
   optimizer = ''
   numQubits = 4
   num_parameters = 0
+  output_path = ''
 
   try:
-   opts, args = getopt.getopt(argv,"p:r:a:q:o:",["hamiltonian=","reference=",
-                              "ansatz=","qubits=","optimizer="])
+   opts, args = getopt.getopt(argv,"p:r:a:q:o:t:",["hamiltonian=","reference=",
+                              "ansatz=","qubits=","optimizer=","output="])
   except getopt.GetoptError:
-    print ('Usage: \n ./vqeBlackBox.py -p <hamiltonian> -r <reference> \
-           -a <ansatz> -q <qubits> -o <optimizer>')
+    print ('Usage: \n ./main.py -p <hamiltonian> -r <reference> \
+           -a <ansatz> -q <qubits> -o <optimizer> -t <output>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
       print ('Usage: \n ./vqeBlackBox.py -p <hamiltonian> -r <reference>',
-             ' -a <ansatz> -q <qubits> -o <optimizer>')
+        '-a <ansatz> -q <qubits> -o <optimizer>')
       sys.exit()
     elif opt in ("-p", "--hamiltonian"):
       hamPath = arg
@@ -53,9 +70,13 @@ def main(argv):
       numQubits = int(arg)
     elif opt in ("-o", "--optimizer"):
       optimizer = arg
+    elif opt in ("-t", "--output"):
+      output_path = 'Results/'+arg
+      if output_path[-4:] != '.txt':
+        output_path += '.txt'
 
   print('\nHamiltonian: ',hamPath,'\nReference State: ',refState,
-    '\nAnsatz: ',ansatz,'\nOptimizer: ',optimizer,'\n')
+    '\nAnsatz: ',ansatz,'\nOptimizer: ',optimizer,'\nOutput: ',output_path)
 
   start_time = time.time()
 
@@ -64,28 +85,23 @@ def main(argv):
   ansatzModule = importlib.import_module('.'+ansatz, package="Ansatz")
   optimizeModule = importlib.import_module('.'+optimizer, package="Optimizer")
 
+  # Get Hamiltonian 
+  sortH = []
   if hamPath[-1] == '/':
     # collect all hamiltonians from a folder
     manyH = glob.glob(hamPath+'*')
-    sortH = []
     for h in manyH:
-      for i in range(len(h)-1,0,-1):
-        curChar = h[i]
-        found1 = False
-        if curChar == '.' and not found1:
-          ir = i+2
-          found1 = True
-        if curChar == '_':
-          il = i+1
-          break
-      r = float(h[il:ir])
+      r = get_distance(h)
       sortH += [(r,h)]
     sortH = sorted(sortH, key=lambda hamil: hamil[0])
+  else:
+    sortH += [(get_distance(hamPath),hamPath)]
 
+  #####################################
+  ######## Begin Main VQE Loop ########
   results = []
   prevParam = None
   for pair in sortH:
-    #### Begin Main VQE Loop ####
     rParam = pair[0]
     hPath = pair[1]
     # Parse the Hamiltonian file as a list of 2-tuples
@@ -127,11 +143,16 @@ def main(argv):
   end_time = time.time()
 
   # After VQE is finished - write results to file
-  for i, c in enumerate(hamPath):
-    if c == '/':
-      fname = hamPath[i+1:-1]+'_{}_to_{}'.format(sortH[0][0], sortH[-1][0])
-      break
-  with open('Results/{}.txt'.format(fname),'w') as outf:
+  if output_path == '':
+    for i, c in enumerate(hamPath):
+      if c == '/':
+        fname = 'Results/'
+        fname += hamPath[i+1:-1]+'_{}_to_{}'.format(sortH[0][0], sortH[-1][0])
+        fname += '.txt'
+        break
+  else:
+    fname = output_path
+  with open(fname,'w') as outf:
     for p in results:
       writeStr = '{0} {1}   '.format(str(p[0]).ljust(5),str(p[1][1]).rjust(20))
       for s in p[1][0]:
