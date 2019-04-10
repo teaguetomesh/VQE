@@ -109,6 +109,7 @@ def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit):
       fullCirc = refCircuit + ansCircuit + mC
       #fullCirc.draw(scale=0.8, filename='vqeCirc_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
       #  output='mpl', plot_barriers=False, reverse_bits=True)
+      #sys.exit()
       circList += [(fullCirc, name)]
     
     return circList

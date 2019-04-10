@@ -11,22 +11,43 @@ Python script for automating calls to visualization.py
 
 import subprocess
 import sys
+import glob
 
 def main(argv):
     '''
     '''
-    
-    dataPath = argv[0]
+  pec_path = ''
+  save_path = ''
+  ter_path = ''
+  
+  try:
+   opts, args = getopt.getopt(argv,"p:s:t:",["pec_path=","save_path=",
+                              "ter_path"])
+  except getopt.GetoptError:
+    print ('Usage: \n ./gen_plots.py -p <pec_path> -s <save_path> -t <ter_path>')
+    sys.exit(2)
+  for opt, arg in opts:
+    if opt == '-h':
+      print ('Usage: \n ./gen_plots.py -p <pec_path> -s <save_path> -t <ter_path>')
+      sys.exit()
+    elif opt in ("-p", "--pec_path"):
+      pec_path = arg
+    elif opt in ("-s", "--save_path"):
+      save_image = True
+      save_path = arg
+    elif opt in ("-t", "--ter_path"):
+      ter_path = arg
 
-    vis = 'python visualization.py -'
+    vis = 'python visualization.py'
     
+
     #plot 1
-    command = vis + 'sn ' + dataPath
-    subprocess.run(command.split())
+    #command = vis + '-e -p ' + pec_path + ' -s ' + save_path + ' -t ' + ter_path
+    #subprocess.run(command.split())
 
     #plot 2
-    command = vis + 'soin ' + dataPath
-    subprocess.run(command.split())
+    #command = vis + '-eio -p ' + pec_path + ' -s ' + save_path + ' -t ' + ter_path
+    #subprocess.run(command.split())
 
 
 

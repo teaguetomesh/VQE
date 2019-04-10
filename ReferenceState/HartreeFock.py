@@ -17,11 +17,11 @@ number of electrons.
 from qiskit import QuantumCircuit, QuantumRegister
 
 
-def generateReferenceState(M, Ne):
+def generateReferenceState(Nq, Ne):
     '''
     '''
 
-    qr = QuantumRegister(M,name='qreg')
+    qr = QuantumRegister(Nq,name='qreg')
     circ = QuantumCircuit(qr)
 
     for n in range(Ne):
@@ -29,6 +29,10 @@ def generateReferenceState(M, Ne):
 
     circ.barrier(qr)
 
-    #circ.draw(scale=0.5, filename='test_circuit', output='mpl', line_length=80, reverse_bits=True)
-
     return circ
+
+
+if __name__ == "__main__":
+  circ = generateReferenceState(4,2)
+  circ.draw(scale=0.8, filename='HF_reference_circuit', output='mpl', 
+        plot_barriers=False, reverse_bits=True)

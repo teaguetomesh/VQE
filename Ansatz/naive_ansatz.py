@@ -41,6 +41,8 @@ def genCircuit(M, p):
         # ladder up
         c.cx(qr[i],qr[i-1])
 
+    c.barrier(qr)
+
     # Perform final rotations
     for i in range(4):
         c.rx(p[i+8] ,qr[i])

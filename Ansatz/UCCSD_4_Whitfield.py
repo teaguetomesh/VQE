@@ -2,6 +2,10 @@
 Teague Tomesh - 3/25/2019
 
 Implementation of the UCCSD ansatz for use in the VQE algorithm.
+
+Based on the description given in Whitfield et al.
+(https://arxiv.org/abs/1001.3855?context=physics.chem-ph)
+
 Adapted from a Scaffold implementation by Pranav Gokhale]
 (https://github.com/epiqc/ScaffCC) 
 
@@ -176,7 +180,7 @@ def genCircuit(Nq, param):
     '''
     '''
     if Nq is not 4:
-        print('ERROR: UCCSD_ansatz_4 is currently implemented for 4 qubits only')
+        print('ERROR: UCCSD_4_Whitfield is currently implemented for 4 qubits only')
         sys.exit()
 
     # UCCSD ansatz for 4 qubits takes 7 different angles
@@ -187,7 +191,7 @@ def genCircuit(Nq, param):
 
     # Initialize quantum register and circuit
     qreg = QuantumRegister(Nq, name='qreg')
-    circ  = QuantumCircuit(qreg, name='uccsd_4')
+    circ  = QuantumCircuit(qreg, name='UCCSD_4_Whitfield')
 
     # enumerate all Nq > p > q > r > s >= 0 and apply Double Excitation Operator
     for p in range(Nq):

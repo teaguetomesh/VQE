@@ -25,11 +25,11 @@ def genMeasureCircuit(H, Nq):
     Pauli bases (Z,X,Y).
     For each term in H, set the bit corresponding to the operator acting on a
     specific qubit to high. 
-    Check of any of the rows sum to a value >1, if so, then multiple circuits
+    Check if any of the rows sum to a value >1, if so, then multiple circuits
     will need to be generated.
 
     Returns:
-        circs (List[QuantumCircuits])
+        List[QuantumCircuits]
     '''
 
     opDict = {'Z':0, 'X':1, 'Y':2}

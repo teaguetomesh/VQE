@@ -10,6 +10,7 @@ import sys
 import getopt
 from scipy.optimize import curve_fit
 import math
+import glob
 
 
 
@@ -120,7 +121,7 @@ def LennardJones(r, epsilon, r_m):
     return epsilon * ((r_m/r)**12 - 2*(r_m/r)**6)
 
 
-def plotPEC(options, pecPath, terPath):
+def plotPEC(options, pecPath, terPath, savePath):
     '''
     '''
     save = options[0]
@@ -130,6 +131,7 @@ def plotPEC(options, pecPath, terPath):
 
     # get molecule name and file name from the path
     savestr, molName = get_names(pecPath)
+    print(savestr,molName)
     r'$\alpha > \beta$'
     if molName == 'H2':
         mstr = r'$H_2$'
@@ -192,6 +194,125 @@ def plotPEC(options, pecPath, terPath):
         plt.savefig(savepath)
         print('Figure saved to: ',savepath)
     
+    plt.show()
+    plt.close()
+
+
+def plot_barkoutsos():
+    '''
+    '''
+
+    group1 = 'Results/UCCSD_random_trials/pec_output/*'
+    group2 = 'Results/UCCSD_random_profile_trials/pec_output/*'
+    fciPath = 'Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt'
+    fciData = np.genfromtxt(fciPath)
+
+    ucc_path = 'Results/H2_sto-3g_JW_0.1_to_3.0_uccsd1.txt'
+    ucc_data = np.genfromtxt(ucc_path)
+
+    pec_files = glob.glob(group1) + glob.glob(group2)
+
+    bestR = []
+    bestE = []
+    for i, fn in enumerate(pec_files):
+        data = np.genfromtxt(fn)
+        if i is 0 :
+            bestR = data[:,0]
+            bestE = data[:,1]
+        else:
+            curE = data[:,1]
+
+            for n in range(len(bestE)):
+                if curE[n] < bestE[n]:
+                    bestE[n] = curE[n]
+
+
+    fig, ax = plt.subplots(figsize=(9,5))
+    ax.axhline(y=0, color='k', lw=0.6)
+
+    # Plot the FCI data
+    ax.plot(fciData[:,0],fciData[:,1],c='k',ls=':',label='FCI')
+
+    # Plot the PEC data
+    ax.plot(bestR,bestE,c='r',label='Random')
+    ax.plot(ucc_data[:,0],ucc_data[:,1],c='b',ls='--',label='FeedForward')
+        
+    ax.legend(loc='lower right')
+
+    plt.xlim(0.5,2.2)
+    plt.ylim(-1.16,-0.90)
+
+    plt.xlabel(r'Interatomic distance ($\AA$)')    
+    plt.ylabel(r'$\langle H \rangle$ (Ha)')
+    plt.title(r'$H_2$ PEC: UCCSD with HartreeFock')
+    
+    save_path = 'Plots/UCCSD_matching_Barkoutsos/H2_pec_bark_rand_vs_prev.png'
+    plt.savefig(save_path)
+    print('Figure saved to: ',save_path)
+
+    plt.show()
+    plt.close()
+
+
+def plot_many():
+    '''
+    '''
+
+    group1 = 'Results/UCCSD_random_trials/pec_output/*'
+    group2 = 'Results/UCCSD_random_profile_trials/pec_output/*'
+    fciPath = 'Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt'
+
+    pec_files = glob.glob(group1) + glob.glob(group2)
+
+    fciData = np.genfromtxt(fciPath)
+
+    # Create the figure
+    fig, ax = plt.subplots(figsize=(8,5))
+    ax.axhline(y=0, color='k', lw=0.6)
+
+    # Plot the FCI data
+    ax.plot(fciData[:,0],fciData[:,1],c='k',ls=':',label='FCI')
+
+    # Plot all of the PEC data
+    pec_color = 'blue'
+    E0test = []
+    all_energy, all_r = [], []
+    for i, fn in enumerate(pec_files):
+        data = np.genfromtxt(fn)
+        r = data[:,0]
+        E = np.array([data[:,1]])
+
+        #ax.scatter(r,E,c=pec_color,s=8)
+        E0test += [E[0,0]]
+        if i is 0:
+            all_r = r
+            all_energy = np.array(E).T
+        else:
+            all_energy =  np.concatenate([all_energy,E.T],axis=1)
+    
+    mean_E = []
+    errs_E = [[],[]]
+    for row in all_energy:
+        mean = np.mean(row)
+        mean_E += [mean]
+        errs_E[0] += [abs(np.amin(row)-mean)]
+        errs_E[1] += [abs(np.amax(row)-mean)]
+
+    ax.errorbar(all_r,mean_E,yerr=errs_E,fmt='bd',label='UCCSD')
+    #ax.scatter([],[],c=pec_color,label='UCCSD')
+    ax.legend(loc='best')
+
+    plt.xlim(0,3.5)
+    plt.ylim(-1.5,2)
+
+    plt.xlabel(r'Interatomic distance ($\AA$)')    
+    plt.ylabel(r'$\langle H \rangle$ (Ha)')
+    plt.title('150 UCCSD runs with random parameter selection')
+    
+    savepath = 'Plots/uccsd_random_trials_wErrs.png'
+    plt.savefig(savepath)
+    print('Figure saved to: ',savepath)
+
     plt.show()
     plt.close()
 
@@ -290,37 +411,52 @@ def main(argv):
   iteration_layer = False
   save_image = False
   fit_curve = False
-  vqe_name = ''
   plot_pec = False
+  plot_double_bool = False
+  plot_many_bool = False
+  plot_barkoutsos_bool = False
+  pec_path = ''
+  save_path = ''
+  ter_path = ''
   
   try:
-   opts, args = getopt.getopt(argv,"dsiofn:",["name="])
+   opts, args = getopt.getopt(argv,"bdefimop:s:t:",["pec_path=","save_path=",
+                              "ter_path"])
   except getopt.GetoptError:
-    print ('Usage: \n python visualization.py -dsiof -n <name>')
+    print ('Usage: \n python visualization.py -bdefio -p <pec_path>',
+           '-s <save_path> -t <ter_path>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-      print ('Usage: \n python visualization.py -dsiof -n <name>')
+      print ('Usage: \n python visualization.py -bdefio -p <pec_path>',
+             '-s <save_path> -t <ter_path>')
       sys.exit()
-    elif opt in ("-n", "--name"):
-      vqe_name = arg
+    elif opt in ("-b"):
+      plot_barkoutsos_bool = True
+    elif opt in ("-d"):
+      plot_double_bool = True
+    elif opt in ("-e"):
       plot_pec = True
-    elif opt in ("-i"):
-      iteration_layer = True
-    elif opt in ("-o"):
-      optimize_layer = True
-    elif opt in ("-s"):
-      save_image = True
     elif opt in ("-f"):
       fit_curve = True
-    elif opt in ("-d"):
-      plot_double()
+    elif opt in ("-i"):
+      iteration_layer = True
+    elif opt in ("-m"):
+      plot_many_bool = True
+    elif opt in ("-o"):
+      optimize_layer = True
+    elif opt in ("-p", "--pec_path"):
+      pec_path = arg
+    elif opt in ("-s", "--save_path"):
+      save_image = True
+      save_path = arg
+    elif opt in ("-t", "--ter_path"):
+      ter_path = arg
+    
+    
     
   if plot_pec:
-    pecPath = 'Results/'+vqe_name
-    ns = vqe_name.split('_')
-    terminalOutputPath = 'Results/'+ns[0]+'_'+ns[1]+'_vqe_output_'+ns[-1]
-    print('\nPEC: ',pecPath,'\nTerminal Output: ',terminalOutputPath,'\n')
+    print('\nPEC: ',pec_path,'\nTerminal Output: ',ter_path,'\n')
 
     options = [save_image, optimize_layer, iteration_layer, fit_curve]
     print('Options:')
@@ -329,7 +465,16 @@ def main(argv):
     print(' Iteration_layer: {}'.format(options[2]))
     print(' Fit_curve: {}'.format(options[3]))
 
-    plotPEC(options, pecPath, terminalOutputPath)
+    plotPEC(options, pec_path, ter_path, save_path)
+
+  if plot_double_bool:
+    plot_double()
+
+  if plot_many_bool:
+    plot_many()
+
+  if plot_barkoutsos_bool:
+    plot_barkoutsos()
 
   
 
