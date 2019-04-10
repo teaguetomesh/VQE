@@ -18,13 +18,13 @@ def main(argv):
     argv contains the arguments to use when calling main.py as well as an int indicating the
     number of trials to run.
     '''
-    num_args = 8
+    num_args = 9
 
     if len(argv) != num_args:
         print('\n---ERROR---')
         print('Must pass {} arguments to gen_vqe.py:'.format(num_args))
         print('  <hamiltonian> <referenceState> <ansatz> <numQubits> <optimizer>',
-              '<pec_output> <terminal_output> <numIterations>\n')
+              '<pec_output> <terminal_output> <profile_output> <numIterations>\n')
         sys.exit(2)
 
     hamPath   = argv[0]
@@ -34,7 +34,8 @@ def main(argv):
     optimizer = argv[4]
     pec_output  = argv[5]
     term_output = argv[6]
-    num_iters = int(argv[7])
+    prof_output = argv[7]
+    num_iters = int(argv[8])
 
     profile = True
 
@@ -45,8 +46,7 @@ def main(argv):
         with open(term_output_file,'w') as tf:
             outputPath = pec_output + str(i)
             if profile:
-                profile_fn = 'Results/'+term_output+'_profile{}.txt'.format(i)
-                profile_com = 'python -m cProfile -o {}'.format(profile_fn)
+                profile_fn = 'Results/'+prof_output+'{}.txt'.format(i)
                 subprocess.run(['python','-m','cProfile','-o',profile_fn,'main.py',
                        '-p',hamPath,'-r',refState,'-a',ansatz,'-q',numQ,'-o',
                        optimizer,'-t',outputPath],stdout=tf)
