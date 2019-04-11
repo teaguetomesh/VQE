@@ -4,3 +4,4 @@ Plots/
 *pycache*
 *.png
 __pycache__/*
+Hamiltonians/molecule_data/
