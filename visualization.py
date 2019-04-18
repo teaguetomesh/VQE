@@ -321,73 +321,80 @@ def plot_double():
     '''
     '''
 
-    path1 = 'Results/H2_sto-3g_JW_0.1_to_3.0_wPrevParam1.txt'
+    path1 = 'Results/H2_sto-3g_JW_0.1_to_3.0_uccsd2.txt'
     path2 = 'Results/H2_sto-3g_JW_0.1_to_3.0_try4.txt'
     fciPath = 'Hamiltonians/FCI_Energies/H2_sto-3g_FCI_energy.txt'
 
-    savestr, molName = get_names(path1)
-    savestr += '_vs_random_zoom'
-    if molName == 'H2':
-        mstr = r'$H_2$'
-    titlestr = 'PEC for '+mstr+', Nelder-Mead, PrevParam vs Random ansatz'
+    group1 = 'Results/UCCSD_Barkoutsos_ff/pec_output/*'
+    #group2 = 'Results/UCCSD_random_profile_trials/pec_output/*'
 
-    # get the data from the files
-    data1 = np.genfromtxt(path1)
-    r1 = data1[:,0]
-    E1 = data1[:,1]
-    data2 = np.genfromtxt(path2)
-    r2 = data2[:,0]
-    E2 = data2[:,1]
-    rcolor = 'SkyBlue'
-    pcolor = 'IndianRed'
+    pec_files = glob.glob(group1)
 
-    # get FCI energy from file
-    fciData = np.genfromtxt(fciPath)
-    fciR = fciData[:,0]
-    fciE = fciData[:,1]
+    for n, fn in enumerate(pec_files):
+        savestr, molName = get_names(path1)
+        savestr += '_vs_random_zoom'
+        savestr = 'Bark_vs_Whit_uccsd/H2_sto-3g_JW_Barkoutsos_vs_Whitfield_{}'.format(n)
+        if molName == 'H2':
+            mstr = r'$H_2$'
+        titlestr = 'PEC for '+mstr+', Barkoutsos vs Whitfield UCCSD'
+        
+        # get the data from the files
+        data1 = np.genfromtxt(path1)
+        r1 = data1[:,0]
+        E1 = data1[:,1]
+        data2 = np.genfromtxt(fn)
+        r2 = data2[:,0]
+        E2 = data2[:,1]
+        color1 = 'SkyBlue'
+        color2 = 'IndianRed'
 
-    # Create the figure
-    fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8,8))
-    pecAx = ax[0]
-    errAx = ax[1]
+        # get FCI energy from file
+        fciData = np.genfromtxt(fciPath)
+        fciR = fciData[:,0]
+        fciE = fciData[:,1]
 
-    # Plot PEC
-    pecAx.axhline(y=0, color='k', lw=0.6)
-    
-    # Plot the data
-    pecAx.plot(fciR,fciE,c='k',ls=':',label='FCI')
-    pecAx.scatter(r2,E2,c=rcolor,s=24,label='Random')
-    #ax.plot(r2,E2,lw=1,c='b')
-    pecAx.scatter(r1,E1,c=pcolor,s=24,label='PrevParam')
-    #ax.plot(r1,E1,lw=1,c='r')
+        # Create the figure
+        fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8,8))
+        pecAx = ax[0]
+        errAx = ax[1]
 
-    pecAx.set_xlim(0,3.1)
-    pecAx.set_ylim(-1.5,5)
+        # Plot PEC
+        pecAx.axhline(y=0, color='k', lw=0.6)
+        
+        # Plot the data
+        pecAx.plot(fciR,fciE,c='k',ls=':',label='FCI')
+        pecAx.scatter(r2,E2,c=color2,s=24,label='Barkoutsos')
+        #ax.plot(r2,E2,lw=1,c='b')
+        pecAx.scatter(r1,E1,c=color1,s=24,label='Whitfield')
+        #ax.plot(r1,E1,lw=1,c='r')
 
-    pecAx.set_ylabel(r'$\langle H \rangle$ (Ha)')
-    pecAx.set_title(titlestr)
-    pecAx.legend(loc='best')
+        pecAx.set_xlim(0,3.1)
+        pecAx.set_ylim(-1.5,5)
+        
 
-    # Plot error with respect to FCI calculation
-    errAx.axhline(y=0, color='k', lw=0.6)
-    prevEDiff = [e1 - e2 for e1, e2 in zip(E1, fciE)]
-    randEDiff = [e1 - e2 for e1, e2 in zip(E2, fciE)]
-    width = 0.04
-    rects1 = errAx.bar(r1 - width/2, prevEDiff, width, color=pcolor)
-    rects2 = errAx.bar(r1 + width/2, randEDiff, width, color=rcolor)
-    errAx.axhline(y=1.6e-3, color='k', lw=1, ls='-.', label='Chemical Accuracy')
-    errAx.set_ylabel('Error wrt FCI energy (Ha)')
-    errAx.set_xlabel(r'Interatomic distance ($\AA$)')
-    errAx.legend(loc='upper right')
-    errAx.set_ylim(0,0.1)
+        pecAx.set_ylabel(r'$\langle H \rangle$ (Ha)')
+        pecAx.set_title(titlestr)
+        pecAx.legend(loc='best')
 
-    
-    # Save figure to file
-    savepath = 'Plots/'+savestr+'.png'
-    plt.savefig(savepath)
-    print('Figure saved to: ',savepath)
-    plt.show()
-    plt.close()
+        # Plot error with respect to FCI calculation
+        errAx.axhline(y=0, color='k', lw=0.6)
+        prevEDiff = [e1 - e2 for e1, e2 in zip(E1, fciE)]
+        randEDiff = [e1 - e2 for e1, e2 in zip(E2, fciE)]
+        width = 0.04
+        rects1 = errAx.bar(r1 - width/2, prevEDiff, width, color=color1)
+        rects2 = errAx.bar(r1 + width/2, randEDiff, width, color=color2)
+        errAx.axhline(y=1.6e-3, color='k', lw=1, ls='-.', label='Chemical Accuracy')
+        errAx.set_ylabel('Error wrt FCI energy (Ha)')
+        errAx.set_xlabel(r'Interatomic distance ($\AA$)')
+        errAx.legend(loc='upper right')
+        errAx.set_ylim(0,0.1)
+
+        # Save figure to file
+        savepath = 'Plots/'+savestr+'.png'
+        plt.savefig(savepath)
+        print('Figure saved to: ',savepath)
+        #plt.show()
+        plt.close()
 
 
 # Main
@@ -476,7 +483,6 @@ def main(argv):
   if plot_barkoutsos_bool:
     plot_barkoutsos()
 
-  
 
 if __name__ == "__main__":
   main(sys.argv[1:])

@@ -13,6 +13,7 @@ bases (i.e. Z and X).
 '''
 
 
+import sys
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import numpy as np
 
@@ -31,6 +32,10 @@ def genMeasureCircuit(H, Nq):
     Returns:
         List[QuantumCircuits]
     '''
+
+    print(H)
+
+    sys.exit()
 
     opDict = {'Z':0, 'X':1, 'Y':2}
 
@@ -73,6 +78,11 @@ def genMeasureCircuit(H, Nq):
 
     return circuitList
 
+
+if __name__ == "__main__":
+  H = ''
+  Nq = 4 
+  genMeasureCircuit()
 
 
 
