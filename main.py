@@ -62,9 +62,9 @@ def main(argv):
       refState = arg
     elif opt in ("-a", "--ansatz"):
       ansatz = arg
-      if ansatz == 'naive_ansatz':
+      if 'naive' in ansatz:
         num_parameters = 20
-      elif ansatz == 'UCCSD_ansatz_4':
+      elif 'UCCSD' in ansatz and '4' in ansatz:
         num_parameters = 7
     elif opt in ("-q", "--qubits"):
       numQubits = int(arg)

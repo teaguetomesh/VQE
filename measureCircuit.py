@@ -33,11 +33,8 @@ def genMeasureCircuit(H, Nq):
         List[QuantumCircuits]
     '''
 
-    print(H)
-
-    sys.exit()
-
     opDict = {'Z':0, 'X':1, 'Y':2}
+    opList = ('Z','X','Y')
 
     quOpMatrix = np.zeros(shape=(Nq,3), dtype=int)
     for term in H:
@@ -46,25 +43,37 @@ def genMeasureCircuit(H, Nq):
             if op[0] is 'I': continue
             quOpMatrix[int(op[1]), opDict[op[0]]] = 1
 
-    #print(quOpMatrix)
-
     numCircs = 0
     for row in quOpMatrix:
         rowSum = np.sum(row)
         if rowSum > numCircs:
-            numCircs = rowSum
+            numCircs = rowSum  
 
     circuitList = []
-    '''
-    TODO: correctly compile each of necessary measurement circuits to 
-    satisfy every term in the Hamiltonian
-    for i in range(numCircs):
-        qr = QuantumRegister(Nq, name='qr')
-        cr = ClassicalRegister(Nq, name='cr')
-        circ = QuantumCircuit(qr, cr)
-        for qubit in range(Nq):
-            for op in range(3): 
-    '''
+    
+    # TODO: correctly compile each of necessary measurement circuits to 
+    # satisfy every term in the Hamiltonian
+
+    # Generate the circuitMatrix
+    #   Number of rows = number of qubits
+    #   Number of cols = number of circuits
+    #   Each entry will have a value v <- {'Z','X','Y'} corresponding to the
+    #   basis this qubit must be measured in.
+    circuitMatrix = []
+    print(quOpMatrix)
+    for i in range(Nq):
+        cur_qubit_entries = []
+        m = 0
+        while len(cur_qubit_entries) < numCircs:
+            m = m % 3
+            if quOpMatrix[i,m] == 1:
+                cur_qubit_entries += [opList[m]]
+            m += 1
+        circuitMatrix += [cur_qubit_entries]
+    circuitMatrix = np.array(circuitMatrix)
+    print(circuitMatrix)
+    sys.exit()
+
     qr = QuantumRegister(Nq, name='qreg')
     cr = ClassicalRegister(Nq, name='creg')
     circ = QuantumCircuit(qr, cr)
@@ -80,9 +89,9 @@ def genMeasureCircuit(H, Nq):
 
 
 if __name__ == "__main__":
-  H = ''
+  H = [(5.076946850678632, ['I0']), (-0.006811585442824442, ['X0', 'X1', 'Y2', 'Y3']), (0.006811585442824442, ['X0', 'Y1', 'Y2', 'X3']), (0.006811585442824442, ['Y0', 'X1', 'X2', 'Y3']), (-0.006811585442824442, ['Y0', 'Y1', 'X2', 'X3']), (-0.4131939082582367, ['Z0']), (0.24086324970819822, ['Z0', 'Z1']), (0.09808757340260295, ['Z0', 'Z2']), (0.10489915884542617, ['Z0', 'Z3']), (-0.41319390825823665, ['Z1']), (0.10489915884542617, ['Z1', 'Z2']), (0.09808757340260295, ['Z1', 'Z3']), (-0.6600956717966215, ['Z2']), (0.09255914539024543, ['Z2', 'Z3']), (-0.6600956717966215, ['Z3'])]
   Nq = 4 
-  genMeasureCircuit()
+  genMeasureCircuit(H, Nq)
 
 
 

@@ -109,39 +109,42 @@ def main(argv):
   num_electrons = 2
   transform = 'JW'
 
-  # Generate molecule at different bond lengths.
-  for point in range(1, n_points + 1):
-    bond_length = bond_length_interval * point
-    description = str(round(bond_length,2))
-    
-    #geometry = [('O',(0.,0.,0.)),('H',(0.757,0.586,0.)),('H',(-0.757,0.586,0.))]
-    geometry = [('H', (0., 0., 0.)), ('H', (0., 0., bond_length))]
-    
-    # If this molecule has not been generated
-    if multiplicity is 1:
-      mult = 'singlet'
-    elif multiplicity is 2:
-      mult = 'triplet'
-    
-    molecule_file = 'molecule_data/{}_{}_{}_{}.hdf5'.format(name,basis,mult,bond_length)
-    config = Path(molecule_file)
-    
-    if not config.is_file():
-      # Generate it now
-      print('--- Generate Molecule: {}_{}_{:.2f} ---'.format(name,basis,bond_length))
-      generate_and_save(geometry, basis, multiplicity, description, molecule_file)
-    
-    # Load the molecule and perform qubit transformation
-    occupied = 2
-    active = 4
-    orbitals = (occupied, active)
-    qubit_h = load_and_transform(molecule_file, orbitals, transform)
+  for occupied_num in range(5):
+    for active_num in range(1,5):
 
-    # Write the qubit hamiltonian to file
-    folder = '{}_{}_{}_AS{}/'.format(name, basis, transform, active)
-    fn = 'qubitH_{}_{}_{}_{}.txt'.format(name, basis, transform, description)
-    qubit_file = folder + fn
-    write_to_file(qubit_file, name, num_electrons, qubit_h, description)
+      # Generate molecule at different bond lengths.
+      for point in range(1, n_points + 1):
+        bond_length = bond_length_interval * point
+        description = str(round(bond_length,2))
+        
+        #geometry = [('O',(0.,0.,0.)),('H',(0.757,0.586,0.)),('H',(-0.757,0.586,0.))]
+        geometry = [('H', (0., 0., 0.)), ('H', (0., 0., bond_length))]
+        
+        # If this molecule has not been generated
+        if multiplicity is 1:
+          mult = 'singlet'
+        elif multiplicity is 2:
+          mult = 'triplet'
+        
+        molecule_file = 'molecule_data/{}_{}_{}_{}.hdf5'.format(name,basis,mult,bond_length)
+        config = Path(molecule_file)
+        
+        if not config.is_file():
+          # Generate it now
+          print('--- Generate Molecule: {}_{}_{:.2f} ---'.format(name,basis,bond_length))
+          generate_and_save(geometry, basis, multiplicity, description, molecule_file)
+        
+        # Load the molecule and perform qubit transformation
+        occupied = occupied_num
+        active = active_num
+        orbitals = (occupied, active)
+        qubit_h = load_and_transform(molecule_file, orbitals, transform)
+
+        # Write the qubit hamiltonian to file
+        folder = '{}_{}_{}_OS{}/AS{}/'.format(name, basis, transform, occupied, active)
+        fn = 'qubitH_{}_{}_{}_{}.txt'.format(name, basis, transform, description)
+        qubit_file = folder + fn
+        write_to_file(qubit_file, name, num_electrons, qubit_h, description)
 
 
 if __name__ == "__main__":
