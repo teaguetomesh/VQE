@@ -106,8 +106,8 @@ def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit):
     for n, tup in enumerate(msrCircuit):
       mC, name = tup
       fullCirc = refCircuit + ansCircuit + mC
-      fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
-        output='mpl', plot_barriers=False, reverse_bits=True)
+      #fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
+      #  output='mpl', plot_barriers=False, reverse_bits=True)
       #sys.exit()
       circList += [(fullCirc, name)]
     
