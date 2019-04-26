@@ -123,13 +123,13 @@ def main(argv):
         # If this molecule has not been generated
         if multiplicity is 1:
           mult = 'singlet'
-        elif multiplicity is 2:
+        elif multiplicity is 3:
           mult = 'triplet'
         
         molecule_file = 'molecule_data/{}_{}_{}_{}.hdf5'.format(name,basis,mult,bond_length)
         config = Path(molecule_file)
         
-        if not config.is_file():
+        if True:#not config.is_file():
           # Generate it now
           print('--- Generate Molecule: {}_{}_{:.2f} ---'.format(name,basis,bond_length))
           generate_and_save(geometry, basis, multiplicity, description, molecule_file)

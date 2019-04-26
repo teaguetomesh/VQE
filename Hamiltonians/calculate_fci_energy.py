@@ -7,39 +7,41 @@ using the Full Configuration Interaction (FCI) method.
 '''
 
 from openfermion.hamiltonians import MolecularData
+import glob
+import sys
 
-# Set molecule parameters.
-basis = 'sto-3g'
-multiplicity = 1
-bond_length_interval = 0.1
-n_points = 30
+# set molecule information to create the proper output filename
 name = 'H2'
+basis = 'sto-3g'
 
-# Generate molecule at different bond lengths.
+# glob all of the molecule files
+molecule_files = glob.glob('molecule_data/*sto-3g_singlet*.hdf5')
+molecule_files = sorted(molecule_files)
+
 fci_energies = []
 bond_lengths = []
-for point in range(1, n_points + 1):
-    bond_length = bond_length_interval * point
-    bond_lengths += [bond_length]
-    description = str(round(bond_length,2))
-    print(description)
-    geometry = [('H', (0., 0., 0.)), ('H', (0., 0., bond_length))]
-    molecule = MolecularData(geometry, basis, multiplicity, description=description)
-    
-    # Load data.
-    molecule.load()
+for fn in molecule_files:
+    # Load the current molecule
+    molecule = MolecularData(filename=fn)
 
+    # the bond length should be the description
+    bond_lengths += [molecule.description]
+    print(molecule.description)
+    
     # Print out some results of calculation.
     print('\nAt bond length of {} angstrom, molecular hydrogen has:'.format(
-        bond_length))
+        molecule.description))
     print('FCI energy of {} Hartree.'.format(molecule.fci_energy))
-    fci_energies += [molecule.fci_energy]
+    fci_energies += [float(molecule.fci_energy)]
+
+print(bond_lengths)
+print(fci_energies)
 
 # Save data to file
-fname = 'FCI_Energies/'+name+'_'+basis+'_FCI_energy.txt'
+fname = 'FCI_Energies/{}_{}_FCI_energy.txt'.format(name,basis)
 with open(fname, 'w') as fn:
     for r, e in zip(bond_lengths, fci_energies):
-        fn.write('{0:.1f} {1:.7f}\n'.format(r,e))
+        fn.write('{0} {1:.7f}\n'.format(r,e))
 
 
 
