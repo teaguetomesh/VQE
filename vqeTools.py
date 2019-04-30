@@ -99,11 +99,11 @@ def hamiltonianAveraging(circList, H, Nq):
     return E
 
 
-def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit):
+def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuits):
     '''
     '''
     circList = []
-    for n, tup in enumerate(msrCircuit):
+    for n, tup in enumerate(msrCircuits):
       mC, name = tup
       fullCirc = refCircuit + ansCircuit + mC
       #fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 

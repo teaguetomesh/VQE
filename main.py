@@ -40,7 +40,7 @@ def main(argv):
   refState = ''
   ansatz = ''
   optimizer = ''
-  numQubits = 4
+  numQubits = 0
   num_parameters = 0
   output_path = ''
 
@@ -62,10 +62,6 @@ def main(argv):
       refState = arg
     elif opt in ("-a", "--ansatz"):
       ansatz = arg
-      if 'naive' in ansatz:
-        num_parameters = 20
-      elif 'UCCSD' in ansatz and '4' in ansatz:
-        num_parameters = 7
     elif opt in ("-q", "--qubits"):
       numQubits = int(arg)
     elif opt in ("-o", "--optimizer"):
@@ -77,6 +73,22 @@ def main(argv):
 
   print('\nHamiltonian: ',hamPath,'\nReference State: ',refState,
     '\nAnsatz: ',ansatz,'\nOptimizer: ',optimizer,'\nOutput: ',output_path)
+
+  # Given the desired ansatz and number of qubits, how many parameters are needed?
+  if 'naive' in ansatz:
+    num_parameters = 20
+  elif 'UCCSD' in ansatz:
+    if numQubits == 2:
+      num_parameters = 1
+    elif numQubits == 4:
+      num_parameters = 7
+    elif numQubits == 6:
+      num_parameters = 30
+    elif numQubits == 8:
+      num_parameters = 98
+    else:
+      print('ERROR: Current ansatz & qubit number not supported')
+      sys.exit(2)
 
   start_time = time.time()
 
@@ -126,14 +138,14 @@ def main(argv):
     print('--reference circuit generated--')
 
     # Generate a circuit for measuring the energy
-    msrCircuit = vqeTools.genMeasure(hamiltonian, numQubits)
+    msrCircuits = vqeTools.genMeasure(hamiltonian, numQubits)
     print('--measurement circuit generated--')
 
     ### VQE ###
     print('--initiate {} optimization--'.format(optimizer))
     final_energy = optimizeModule.minimizeEnergyObjective(hamiltonian, numQubits,
-                                           ansatzModule, refCircuit, msrCircuit,
-                                           prevParam, num_parameters)
+                                      ansatzModule, refCircuit, msrCircuits,
+                                      prevParam, num_parameters)
 
     print('--optimization finished--')
     print('\tAchieved {0:.7f} Ha at {1} angstroms'.format(final_energy[1], rParam))

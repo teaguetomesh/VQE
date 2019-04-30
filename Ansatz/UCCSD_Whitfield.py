@@ -124,7 +124,11 @@ def DoubleExcitationOperator(circ, theta, p, q, r, s):
 
     for i in range(1,9):
 
+        circ.barrier(qr)
+
         circ = M_d(i, circ, p, q, r, s, dagger=False)
+
+        circ.barrier(qr)
 
         circ = CNOTLadder(circ, p, q)
         circ.cx(qr[q],qr[r])
@@ -153,6 +157,7 @@ def SingleExcitationOperator(circ, theta, p, q):
 
     circ.h(qr[p])
     circ.h(qr[q])
+    
     circ = CNOTLadder(circ, p, q)
     circ.rz(theta,qr[q]) # Rz(reg[q], Theta_p_q[p][q]);
     circ = CNOTLadder(circ, q, p)
@@ -161,7 +166,7 @@ def SingleExcitationOperator(circ, theta, p, q):
 
     circ.h(qr[p])
     circ.h(qr[q])
-
+    
     circ.rx(-PI/2, qr[p])
     circ.rx(-PI/2, qr[q])
     circ = CNOTLadder(circ, p, q)
@@ -179,19 +184,19 @@ def SingleExcitationOperator(circ, theta, p, q):
 def genCircuit(Nq, param):
     '''
     '''
-    if Nq is not 4:
-        print('ERROR: UCCSD_4_Whitfield is currently implemented for 4 qubits only')
-        sys.exit()
-
-    # UCCSD ansatz for 4 qubits takes 7 different angles
-    # 1 for the double excitation operator
-    # 6 for the single excitation operator
-    # Map the parameter indices to a dictionary here, indexed by p,q,r,s strings
-    pdict = {'3210':0,'10':1,'20':2,'21':3,'30':4,'31':5,'32':6}
+    # Ensure the # of parameters matches what is neede by the current value of 
+    # Nq, then set a counter, p_i=0, when the circuit is first initialized, and 
+    # every call to the single or double operator will take param[p_i] as its 
+    # parameter and then increment the value of p_i
+    if (Nq == 2 and len(param) != 1) or (Nq == 4 and len(param) != 7) \
+      or (Nq == 6 and len(param) != 30) or (Nq == 8 and len(param) != 98):
+        print('Number of parameters = {} not compatible with number of qubits = {}'.format(len(param),Nq))
+        sys.exit(2)
 
     # Initialize quantum register and circuit
     qreg = QuantumRegister(Nq, name='qreg')
     circ  = QuantumCircuit(qreg, name='UCCSD_4_Whitfield')
+    p_i = 0
 
     # enumerate all Nq > p > q > r > s >= 0 and apply Double Excitation Operator
     for p in range(Nq):
@@ -200,21 +205,24 @@ def genCircuit(Nq, param):
           for s in range(r): 
             #print(p,q,r,s)
             # For the 4 qubit case this function is called a single time
-            pqrs = str(p)+str(q)+str(r)+str(s)
-            circ = DoubleExcitationOperator(circ,param[pdict[pqrs]],p,q,r,s)
+            circ = DoubleExcitationOperator(circ,param[p_i],p,q,r,s)
+            p_i += 1
 
     # enumerate all Nq > p > q >= 0 and apply Single Excitation Operator
     for p in range(Nq):
       for q in range(p):
-        pq = str(p)+str(q)
-        SingleExcitationOperator(circ, param[pdict[pq]], p, q);
+        #print(p,q)
+        SingleExcitationOperator(circ, param[p_i], p, q)
+        p_i += 1
 
     return circ
 
 if __name__ == "__main__":
-  circ = genCircuit(4,[0,1,2,3,4,5,6])
-  circ.draw(scale=0.8, filename='test_circuit', output='mpl', 
-        plot_barriers=False, reverse_bits=True)
+  params = [i for i in range(98)]
+  circ = genCircuit(8,params)
+  print('drawing circuit')
+  circ.draw(scale=0.8, filename='test_circuit.txt', output='text', 
+        plot_barriers=True, reverse_bits=True, line_length=240)
 
 
 

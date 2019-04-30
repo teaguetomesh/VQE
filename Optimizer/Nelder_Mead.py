@@ -58,7 +58,6 @@ def nelder_mead(func, x_start,
                 no_improv_break=15, max_iter=5000):
     '''
     '''
-
     ###Initialize###
     ndim = len(x_start)
     npts = ndim + 1
@@ -161,8 +160,8 @@ def nelder_mead(func, x_start,
 
 
 # Minimize the measured energy
-def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, msrCircuit,
-                            prevParam, num_parameters):
+def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, 
+                            msrCircuits, prevParam, num_parameters):
     '''
     Initialize parameters for and then call the Nelder-Mead optimization 
     function
@@ -171,7 +170,7 @@ def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, ms
         @param numQubits (int): number of qubits in the simulation
         @param ansatzModule (module): python module containing a script to
                         generate an ansatz circuit given a vector of parameters
-        @param refCircuit, msrCircuit (QuantumCircuit): precomputed circuits
+        @param refCircuit, msrCircuits (QuantumCircuit): precomputed circuits
             which produce the reference state and the necessary measurements for
             this particular Hamiltonian.
 
@@ -188,7 +187,7 @@ def minimizeEnergyObjective(hamiltonian, numQubits, ansatzModule, refCircuit, ms
         # Generate a circuit for the ansatz
         ansCircuit = vqeTools.genAnsatz(ansatzModule, numQubits, params)
 
-        circList = vqeTools.constructQuantumCircuit(refCircuit, ansCircuit, msrCircuit)
+        circList = vqeTools.constructQuantumCircuit(refCircuit, ansCircuit, msrCircuits)
 
         # Energy integration
         energy = vqeTools.hamiltonianAveraging(circList, hamiltonian, numQubits)

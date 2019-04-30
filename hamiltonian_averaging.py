@@ -79,11 +79,14 @@ def matchTermToCircuit(nameList, H, Nq):
 
         termStrings[n] = termString
 
+    # To see the relation between termStrings and H, uncomment this loop
+    #for t, h in zip(termStrings, H):
+    #    print(t,h)
+
     #print('termStrings: ',termStrings)
 
     matching = {}
     termIndices = np.arange(1,len(H))
-    #print(termIndices)
     for circName in nameList:
         matchedTerms, delList = [], []
         #nTerms = len(termIndices)
@@ -102,18 +105,25 @@ def matchTermToCircuit(nameList, H, Nq):
     return matching, termStrings
 
 
-def computeContrib(ts, ss):
+def computeParity(ts, ss):
     '''
+    Input:
+        ts (str): termstring, i.e.  XXZY or **ZZY**YZZ
+        ss (str): statestring, i.e. 0000 or 0101000110
     '''
     val = 1
     for c_ts, c_ss in zip(ts, ss):
         if c_ts == '*':
+            # this particular term does not care about this particular qubit
             continue
-        # measurements of 1 contribute factor -1
         if c_ss == '1':
+            # measurements of 1 contribute factor -1 --> measuring the 1 state
+            # means this qubit is in the |1> eigenspace with eigenvalue = -1
             val = -1*val
-        # measurements of 0 contribute factor +1
-        # so no need to multiply by +1
+        #if c_ss == '0' then...    
+            # measurements of 0 contribute factor +1 --> the |0> eigenspace has
+            # eigenvalue = +1
+            # (do not need to change anything in this case)
     return val
 
 
@@ -139,28 +149,23 @@ def energyIntegration(H, terms, counts, termStrings):
                 E = coef1*(()+()+...)/#shots + coef2*(()+()+...)/#shots + ...
     '''
 
-    #print('these are the terms: ', terms)
-
     energySum = 0
     numShots = np.sum(list(counts.values()))
 
     for term in terms:
         coef = H[term][0]
         ts = termStrings[term]
-        #print('coef: {}'.format(coef))
-        #print('termString: {}'.format(ts))
 
         # for this term, average its energy contribution by counting the 
         # number of times it contributed +1 or -1
-        runningSum = 0
+        weight = 0
         for state in counts:
             count = counts[state]
-            contrib = computeContrib(ts, state)
-            #print(state, count, contrib)
-            runningSum = runningSum + (contrib*count)
+            parity = computeParity(ts, state)
+            weight += (parity*count)
 
         # multiply by the term's coefficient
-        energySum = energySum + (coef*runningSum)
+        energySum += (coef*weight)
 
     return (energySum / numShots)
 
@@ -188,8 +193,10 @@ def run(circList, H, Nq):
     #      precision. Li et al: for desired precision, e, need O(w^2/e^2) shots.
     shots   = 1000
     simulator = Aer.get_backend('qasm_simulator')
+    # The first term of the Hamiltonian is usually the identity operator with
+    # coefficient in front. That coefficient is the starting point for
+    # the energy calculation.
     totalE = H[0][0]
-    #print(totalE)
     for tup in circList:
       circ = tup[0]
       name = tup[1]
@@ -203,6 +210,20 @@ def run(circList, H, Nq):
 
     return totalE
 
+
+if __name__ == "__main__":
+  #H = [(0.9, ['I0']), (0.8, ['X1']), (0.1, ['Z0', 'Z1']), (0.1, ['X0', 'X1']),(0.1, ['X0', 'Z1']), (0.1, ['X2', 'Z3']), (0.8, ['Z0'])]
+  H = [(1, ['I0']), (1, ['X0', 'X1', 'Y2', 'Y3']), (1, ['X0', 'X1', 'Y2', 'Z3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['X0', 'X1', 'X3', 'Z4', 'Z5', 'X6']), (1, ['X0', 'X1', 'Y4', 'Y5']), (1, ['X0', 'X1', 'Y6', 'Y7']), (1, ['X0', 'Y1', 'Y2', 'X3']), (1, ['X0', 'Y1', 'Y2', 'Z3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['X0', 'Y1', 'Y3', 'Z4', 'Z5', 'X6']), (1, ['X0', 'Y1', 'Y4', 'X5']), (1, ['X0', 'Y1', 'Y6', 'X7']), (1, ['X0', 'Z1', 'X2', 'X3', 'Z4', 'X5']), (1, ['X0', 'Z1', 'X2', 'Y3', 'Z4', 'Y5']), (1, ['X0', 'Z1', 'X2', 'X4', 'Z5', 'X6']), (1, ['X0', 'Z1', 'X2', 'Y4', 'Z5', 'Y6']), (1, ['X0', 'Z1', 'X2', 'X5', 'Z6', 'X7']), (1, ['X0', 'Z1', 'X2', 'Y5', 'Z6', 'Y7']), (1, ['X0', 'Z1', 'Y2', 'Y4', 'Z5', 'X6']), (1, ['X0', 'Z1', 'Z2', 'X3', 'Y4', 'Z5', 'Z6', 'Y7']), (1, ['X0', 'Z1', 'Z2', 'X3', 'X5', 'X6']), (1, ['X0', 'Z1', 'Z2', 'Y3', 'Y4', 'Z5', 'Z6', 'X7']), (1, ['X0', 'Z1', 'Z2', 'Y3', 'Y5', 'X6']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'X4']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'X4', 'Z5']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'X4', 'Z6']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'X4', 'Z7']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'Z4', 'X5', 'Y6', 'Y7']), (1, ['X0', 'Z1', 'Z2', 'Z3', 'Z4', 'Y5', 'Y6', 'X7']), (1, ['X0', 'Z1', 'Z2', 'X4']), (1, ['X0', 'Z1', 'Z3', 'X4']), (1, ['X0', 'Z2', 'Z3', 'X4']), (1, ['Y0', 'X1', 'X2', 'Y3']), (1, ['Y0', 'X1', 'X2', 'Z3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['Y0', 'X1', 'X3', 'Z4', 'Z5', 'Y6']), (1, ['Y0', 'X1', 'X4', 'Y5']), (1, ['Y0', 'X1', 'X6', 'Y7']), (1, ['Y0', 'Y1', 'X2', 'X3']), (1, ['Y0', 'Y1', 'X2', 'Z3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['Y0', 'Y1', 'Y3', 'Z4', 'Z5', 'Y6']), (1, ['Y0', 'Y1', 'X4', 'X5']), (1, ['Y0', 'Y1', 'X6', 'X7']), (1, ['Y0', 'Z1', 'X2', 'X4', 'Z5', 'Y6']), (1, ['Y0', 'Z1', 'Y2', 'X3', 'Z4', 'X5']), (1, ['Y0', 'Z1', 'Y2', 'Y3', 'Z4', 'Y5']), (1, ['Y0', 'Z1', 'Y2', 'X4', 'Z5', 'X6']), (1, ['Y0', 'Z1', 'Y2', 'Y4', 'Z5', 'Y6']), (1, ['Y0', 'Z1', 'Y2', 'X5', 'Z6', 'X7']), (1, ['Y0', 'Z1', 'Y2', 'Y5', 'Z6', 'Y7']), (1, ['Y0', 'Z1', 'Z2', 'X3', 'X4', 'Z5', 'Z6', 'Y7']), (1, ['Y0', 'Z1', 'Z2', 'X3', 'X5', 'Y6']), (1, ['Y0', 'Z1', 'Z2', 'Y3', 'X4', 'Z5', 'Z6', 'X7']), (1, ['Y0', 'Z1', 'Z2', 'Y3', 'Y5', 'Y6']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Y4']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Y4', 'Z5']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Y4', 'Z6']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Y4', 'Z7']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Z4', 'X5', 'X6', 'Y7']), (1, ['Y0', 'Z1', 'Z2', 'Z3', 'Z4', 'Y5', 'X6', 'X7']), (1, ['Y0', 'Z1', 'Z2', 'Y4']), (1, ['Y0', 'Z1', 'Z3', 'Y4']), (1, ['Y0', 'Z2', 'Z3', 'Y4']), (1, ['Z0']), (1, ['Z0', 'X1', 'Z2', 'Z3', 'Z4', 'X5']), (1, ['Z0', 'Y1', 'Z2', 'Z3', 'Z4', 'Y5']), (1, ['Z0', 'Z1']), (1, ['Z0', 'X2', 'Z3', 'Z4', 'Z5', 'X6']), (1, ['Z0', 'Y2', 'Z3', 'Z4', 'Z5', 'Y6']), (1, ['Z0', 'Z2']), (1, ['Z0', 'X3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['Z0', 'Y3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['Z0', 'Z3']), (1, ['Z0', 'Z4']), (1, ['Z0', 'Z5']), (1, ['Z0', 'Z6']), (1, ['Z0', 'Z7']), (1, ['X1', 'X2', 'Y3', 'Y4']), (1, ['X1', 'X2', 'X4', 'Z5', 'Z6', 'X7']), (1, ['X1', 'X2', 'Y5', 'Y6']), (1, ['X1', 'Y2', 'Y3', 'X4']), (1, ['X1', 'Y2', 'Y4', 'Z5', 'Z6', 'X7']), (1, ['X1', 'Y2', 'Y5', 'X6']), (1, ['X1', 'Z2', 'X3', 'X4', 'Z5', 'X6']), (1, ['X1', 'Z2', 'X3', 'Y4', 'Z5', 'Y6']), (1, ['X1', 'Z2', 'X3', 'X5', 'Z6', 'X7']), (1, ['X1', 'Z2', 'X3', 'Y5', 'Z6', 'Y7']), (1, ['X1', 'Z2', 'Y3', 'Y5', 'Z6', 'X7']), (1, ['X1', 'Z2', 'Z3', 'X4', 'X6', 'X7']), (1, ['X1', 'Z2', 'Z3', 'Y4', 'Y6', 'X7']), (1, ['X1', 'Z2', 'Z3', 'Z4', 'X5']), (1, ['X1', 'Z2', 'Z3', 'Z4', 'X5', 'Z6']), (1, ['X1', 'Z2', 'Z3', 'Z4', 'X5', 'Z7']), (1, ['X1', 'Z2', 'Z3', 'X5']), (1, ['X1', 'Z2', 'Z4', 'X5']), (1, ['X1', 'Z3', 'Z4', 'X5']), (1, ['Y1', 'X2', 'X3', 'Y4']), (1, ['Y1', 'X2', 'X4', 'Z5', 'Z6', 'Y7']), (1, ['Y1', 'X2', 'X5', 'Y6']), (1, ['Y1', 'Y2', 'X3', 'X4']), (1, ['Y1', 'Y2', 'Y4', 'Z5', 'Z6', 'Y7']), (1, ['Y1', 'Y2', 'X5', 'X6']), (1, ['Y1', 'Z2', 'X3', 'X5', 'Z6', 'Y7']), (1, ['Y1', 'Z2', 'Y3', 'X4', 'Z5', 'X6']), (1, ['Y1', 'Z2', 'Y3', 'Y4', 'Z5', 'Y6']), (1, ['Y1', 'Z2', 'Y3', 'X5', 'Z6', 'X7']), (1, ['Y1', 'Z2', 'Y3', 'Y5', 'Z6', 'Y7']), (1, ['Y1', 'Z2', 'Z3', 'X4', 'X6', 'Y7']), (1, ['Y1', 'Z2', 'Z3', 'Y4', 'Y6', 'Y7']), (1, ['Y1', 'Z2', 'Z3', 'Z4', 'Y5']), (1, ['Y1', 'Z2', 'Z3', 'Z4', 'Y5', 'Z6']), (1, ['Y1', 'Z2', 'Z3', 'Z4', 'Y5', 'Z7']), (1, ['Y1', 'Z2', 'Z3', 'Y5']), (1, ['Y1', 'Z2', 'Z4', 'Y5']), (1, ['Y1', 'Z3', 'Z4', 'Y5']), (1, ['Z1']), (1, ['Z1', 'X2', 'Z3', 'Z4', 'Z5', 'X6']), (1, ['Z1', 'Y2', 'Z3', 'Z4', 'Z5', 'Y6']), (1, ['Z1', 'Z2']), (1, ['Z1', 'X3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['Z1', 'Y3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['Z1', 'Z3']), (1, ['Z1', 'Z4']), (1, ['Z1', 'Z5']), (1, ['Z1', 'Z6']), (1, ['Z1', 'Z7']), (1, ['X2', 'X3', 'Y4', 'Y5']), (1, ['X2', 'X3', 'Y6', 'Y7']), (1, ['X2', 'Y3', 'Y4', 'X5']), (1, ['X2', 'Y3', 'Y6', 'X7']), (1, ['X2', 'Z3', 'X4', 'X5', 'Z6', 'X7']), (1, ['X2', 'Z3', 'X4', 'Y5', 'Z6', 'Y7']), (1, ['X2', 'Z3', 'Z4', 'Z5', 'X6']), (1, ['X2', 'Z3', 'Z4', 'Z5', 'X6', 'Z7']), (1, ['X2', 'Z3', 'Z4', 'X6']), (1, ['X2', 'Z3', 'Z5', 'X6']), (1, ['X2', 'Z4', 'Z5', 'X6']), (1, ['Y2', 'X3', 'X4', 'Y5']), (1, ['Y2', 'X3', 'X6', 'Y7']), (1, ['Y2', 'Y3', 'X4', 'X5']), (1, ['Y2', 'Y3', 'X6', 'X7']), (1, ['Y2', 'Z3', 'Y4', 'X5', 'Z6', 'X7']), (1, ['Y2', 'Z3', 'Y4', 'Y5', 'Z6', 'Y7']), (1, ['Y2', 'Z3', 'Z4', 'Z5', 'Y6']), (1, ['Y2', 'Z3', 'Z4', 'Z5', 'Y6', 'Z7']), (1, ['Y2', 'Z3', 'Z4', 'Y6']), (1, ['Y2', 'Z3', 'Z5', 'Y6']), (1, ['Y2', 'Z4', 'Z5', 'Y6']), (1, ['Z2']), (1, ['Z2', 'X3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['Z2', 'Y3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['Z2', 'Z3']), (1, ['Z2', 'Z4']), (1, ['Z2', 'Z5']), (1, ['Z2', 'Z6']), (1, ['Z2', 'Z7']), (1, ['X3', 'X4', 'Y5', 'Y6']), (1, ['X3', 'Y4', 'Y5', 'X6']), (1, ['X3', 'Z4', 'Z5', 'Z6', 'X7']), (1, ['X3', 'Z4', 'Z5', 'X7']), (1, ['X3', 'Z4', 'Z6', 'X7']), (1, ['X3', 'Z5', 'Z6', 'X7']), (1, ['Y3', 'X4', 'X5', 'Y6']), (1, ['Y3', 'Y4', 'X5', 'X6']), (1, ['Y3', 'Z4', 'Z5', 'Z6', 'Y7']), (1, ['Y3', 'Z4', 'Z5', 'Y7']), (1, ['Y3', 'Z4', 'Z6', 'Y7']), (1, ['Y3', 'Z5', 'Z6', 'Y7']), (1, ['Z3']), (1, ['Z3', 'Z4']), (1, ['Z3', 'Z5']), (1, ['Z3', 'Z6']), (1, ['Z3', 'Z7']), (1, ['X4', 'X5', 'Y6', 'Y7']), (1, ['X4', 'Y5', 'Y6', 'X7']), (1, ['Y4', 'X5', 'X6', 'Y7']), (1, ['Y4', 'Y5', 'X6', 'X7']), (1, ['Z4']), (1, ['Z4', 'Z5']), (1, ['Z4', 'Z6']), (1, ['Z4', 'Z7']), (1, ['Z5']), (1, ['Z5', 'Z6']), (1, ['Z5', 'Z7']), (1, ['Z6']), (1, ['Z6', 'Z7']), (1, ['Z7'])]
+  #nameList = ['ZZZZ','XXXX','XZXZ']
+  nameList = ['ZZZZZZZZ', 'XXYYXXYY', 'YYXXYYXX', 'XYYXXYYX', 'YXXYYXXY', 'XZZZXZZZ', 'YZZZYZZZ', 'ZZZXZZZX', 'ZZZYZZZY', 'XXXYYYYX', 'XYYYYXXX', 'ZXZZZXZZ', 'ZYZZZYZZ', 'ZZXZZZXZ', 'ZZYZZZYZ', 'YXYXXYXY', 'YYXXXXYY', 'XZXZXXZX', 'XZXZXYZY', 'YZYXZXZX', 'YZYZYYZY', 'XXYZZZZY', 'XXZXZZXZ', 'XYYZZZZX', 'XYZYZZXZ', 'XZXXZXZZ', 'XZXYZYZZ', 'XZXZXZXZ', 'XZXZYZYZ', 'XZYZYZXZ', 'XZZXYZZY', 'XZZXZXXZ', 'XZZYYZZX', 'XZZYZYXZ', 'XZZZZXYY', 'XZZZZYYX', 'YXXZZZZY', 'YXZXZZYZ', 'YYXZZZZX', 'YYZYZZYZ', 'YZXZXZYZ', 'YZYYZYZZ', 'YZYZXZXZ', 'YZYZYZYZ', 'YZZXXZZY', 'YZZXZXYZ', 'YZZYXZZX', 'YZZYZYYZ', 'YZZZZXXY', 'YZZZZYXX', 'ZXXZXZZX', 'ZXYZYZZX', 'ZXZXXZXZ', 'ZXZXYZYZ', 'ZXZXZXZX', 'ZXZXZYZY', 'ZXZYZYZX', 'ZXZZXZXX', 'ZXZZYZYX', 'ZYXZXZZY', 'ZYYZYZZY', 'ZYZXZXZY', 'ZYZYXZXZ', 'ZYZYYZYZ', 'ZYZYZXZX', 'ZYZYZYZY', 'ZYZZXZXY', 'ZYZZYZYY', 'ZZYZYXZX']
+  Nq = 8
+  matching, termstrings = matchTermToCircuit(nameList, H, Nq)
+  for key in matching:
+    print('-----------------')
+    matchedterms = matching[key]
+    print('size = {}'.format(len(matchedterms)))
+    terms = [termstrings[i] for i in matchedterms]
+    print(terms)
 
 
 
