@@ -173,8 +173,8 @@ def main(argv):
       outf.write(writeStr)
 
   elapsed_time = end_time - start_time
-  timestr = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
-  print('Elapsed time: ', timestr)
+  timestr = time.strftime("%d:%H:%M:%S", time.gmtime(elapsed_time))
+  print('Elapsed time (D:H:M:S): ', timestr)
 
 if __name__ == "__main__":
   main(sys.argv[1:])

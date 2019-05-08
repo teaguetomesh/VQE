@@ -6,6 +6,9 @@ determine the expected energy of the given Hamiltonian.
 
 '''
 
+import sys
+import time
+import multiprocessing as mp
 from qiskit import Aer, execute
 from qiskit.providers.aer import QasmSimulator
 import visualization as vis
@@ -17,7 +20,7 @@ def match(cs, ts):
     '''
     truthVal = True
     for c_cs, c_ts in zip(cs, ts):
-        if c_ts == '*': 
+        if c_ts == '*':
             continue
         elif c_cs != c_ts:
             truthVal = False
@@ -170,6 +173,19 @@ def energyIntegration(H, terms, counts, termStrings):
     return (energySum / numShots)
 
 
+def fire(queue,tup,simulator,H,matching,termStrings):
+    circ = tup[0]
+    name = tup[1]
+    #print('IN FIRE, CIRCNAME = {}'.format(name))
+    result = execute(circ, simulator).result()
+    counts = result.get_counts(circ)
+    #print(counts)
+      
+    #vis.state_histogram(counts,'Naive Ansatz Counts: {} shots'.format(shots))
+
+    queue.put(energyIntegration(H, matching[name], counts, termStrings))
+
+
 def run(circList, H, Nq):
     '''
     Perform Hamiltonian averaging or energy integration to determine the
@@ -186,6 +202,8 @@ def run(circList, H, Nq):
     Returns:
         totalE (float): estimation for the expected energy
     '''
+    #print('IN RUN, START TIME')
+    start_time = time.time()
     nameList = [t[1] for t in circList]
     matching, termStrings = matchTermToCircuit(nameList, H, Nq)
 
@@ -196,19 +214,25 @@ def run(circList, H, Nq):
     # The first term of the Hamiltonian is usually the identity operator with
     # coefficient in front. That coefficient is the starting point for
     # the energy calculation.
-    totalE = H[0][0]
-    for tup in circList:
-      circ = tup[0]
-      name = tup[1]
-      result = execute(circ, simulator).result()
-      counts = result.get_counts(circ)
-      #print(counts)
-      
-      #vis.state_histogram(counts,'Naive Ansatz Counts: {} shots'.format(shots))
+    multiproc_output = mp.Queue()
+    processes = [mp.Process(target=fire,args=([multiproc_output,t,simulator,H,matching,termStrings])) for t in circList]
+    #print('IN HA, NUM PROCESSES = {}'.format(len(processes)))
+    #print('NUM CIRCUITS = {}'.format(len(circList)))
+    for p in processes:
+        p.start()
+    for p in processes:
+        p.join()
+    
+    results = [multiproc_output.get() for p in processes]
+    
+    #print(results)
+    #print(np.sum(results))
+    #end_time = time.time()
+    #elapsed_time = end_time - start_time
+    #timestr = time.strftime("%H:%M:%S",time.gmtime(elapsed_time))
+    #print('FINISHED, elapsed time: ',timestr)
 
-      totalE = totalE + energyIntegration(H, matching[name], counts, termStrings)
-
-    return totalE
+    return np.sum(results)
 
 
 if __name__ == "__main__":
