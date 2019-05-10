@@ -9,7 +9,7 @@ determine the expected energy of the given Hamiltonian.
 import sys
 import time
 import multiprocessing as mp
-from qiskit import Aer, execute
+from qiskit import BasicAer, execute
 from qiskit.providers.aer import QasmSimulator
 import visualization as vis
 import numpy as np
@@ -210,7 +210,7 @@ def run(circList, H, Nq):
     #TODO: add logic to change the number of shots based on the desired 
     #      precision. Li et al: for desired precision, e, need O(w^2/e^2) shots.
     shots   = 1000
-    simulator = Aer.get_backend('qasm_simulator')
+    simulator = BasicAer.get_backend('qasm_simulator')
     # The first term of the Hamiltonian is usually the identity operator with
     # coefficient in front. That coefficient is the starting point for
     # the energy calculation.
