@@ -10,11 +10,32 @@ Eigensolver algorithm.
 '''
 
 import sys
+import argparse
 import time
 import getopt
 import importlib
 import vqeTools
 import glob
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p","--hamiltonian", type=str,
+            default=None, help="Path to Hamiltonian")
+    parser.add_argument("-r","--refstate", type=str,
+            default=None,
+            help="Name of the reference state to use (Look in ReferenceState/)")
+    parser.add_argument("-a","--ansatz", type=str,
+            default=None, help="Name of the ansatz to use (Look in Ansatz/)")
+    parser.add_argument("-q","--qubits", type=int,
+            default=None, help="Number of qubits")
+    parser.add_argument("-o","--optimizer", type=str,
+            default=None,
+            help="Name of the optimizer to use (Look in Optimizer/)")
+    parser.add_argument("-w","--output", type=str,
+            default="DEFAULT_OUTPUT.txt", help="Path to the output file")
+    args = parser.parse_args()
+    return args
 
 
 def get_distance(h):
@@ -34,80 +55,49 @@ def get_distance(h):
 
 
 # Main
-def main(argv):
+def main():
 
-  hamPath = ''
-  refState = ''
-  ansatz = ''
-  optimizer = ''
-  numQubits = 0
-  num_parameters = 0
-  output_path = ''
+  # Parse input args
+  args = parse_args()
 
-  try:
-   opts, args = getopt.getopt(argv,"p:r:a:q:o:t:",["hamiltonian=","reference=",
-                              "ansatz=","qubits=","optimizer=","output="])
-  except getopt.GetoptError:
-    print ('Usage: \n ./main.py -p <hamiltonian> -r <reference> \
-           -a <ansatz> -q <qubits> -o <optimizer> -t <output>')
-    sys.exit(2)
-  for opt, arg in opts:
-    if opt == '-h':
-      print ('Usage: \n ./vqeBlackBox.py -p <hamiltonian> -r <reference>',
-        '-a <ansatz> -q <qubits> -o <optimizer>')
-      sys.exit()
-    elif opt in ("-p", "--hamiltonian"):
-      hamPath = arg
-    elif opt in ("-r", "--reference"):
-      refState = arg
-    elif opt in ("-a", "--ansatz"):
-      ansatz = arg
-    elif opt in ("-q", "--qubits"):
-      numQubits = int(arg)
-    elif opt in ("-o", "--optimizer"):
-      optimizer = arg
-    elif opt in ("-t", "--output"):
-      output_path = 'Results/'+arg
-      if output_path[-4:] != '.txt':
-        output_path += '.txt'
-
-  print('\nHamiltonian: ',hamPath,'\nReference State: ',refState,
-    '\nAnsatz: ',ansatz,'\nOptimizer: ',optimizer,'\nOutput: ',output_path)
+  print('\nHamiltonian: ',args.hamiltonian,'\nReference State: ',args.refstate,
+    '\nAnsatz: ',args.ansatz,'\nOptimizer: ',args.optimizer,'\nOutput: ',args.output)
 
   # Given the desired ansatz and number of qubits, how many parameters are needed?
-  if 'naive' in ansatz:
+  num_parameters = -1
+  if 'naive' in args.ansatz:
     num_parameters = 20
-  elif 'UCCSD' in ansatz:
-    if numQubits == 2:
+  elif 'UCCSD' in args.ansatz:
+    if args.qubits == 2:
       num_parameters = 1
-    elif numQubits == 4:
+    elif args.qubits == 4:
       num_parameters = 7
-    elif numQubits == 6:
+    elif args.qubits == 6:
       num_parameters = 30
-    elif numQubits == 8:
+    elif args.qubits == 8:
       num_parameters = 98
-    else:
-      print('ERROR: Current ansatz & qubit number not supported')
-      sys.exit(2)
+  if num_parameters == -1:
+    print('ERROR: Current ansatz & qubit number not supported')
+    sys.exit(2)
 
   start_time = time.time()
 
   # Import the modules for the specified reference state, ansatz, and optimizer
-  refStateModule = importlib.import_module('.'+refState, package="ReferenceState")
-  ansatzModule = importlib.import_module('.'+ansatz, package="Ansatz")
-  optimizeModule = importlib.import_module('.'+optimizer, package="Optimizer")
+  refStateModule = importlib.import_module('.'+args.refstate, package="ReferenceState")
+  ansatzModule = importlib.import_module('.'+args.ansatz, package="Ansatz")
+  optimizeModule = importlib.import_module('.'+args.optimizer, package="Optimizer")
 
   # Get Hamiltonian 
   sortH = []
-  if hamPath[-1] == '/':
+  if args.hamiltonian[-1] == '/':
     # collect all hamiltonians from a folder
-    manyH = glob.glob(hamPath+'*')
+    manyH = glob.glob(args.hamiltonian+'*')
     for h in manyH:
       r = get_distance(h)
       sortH += [(r,h)]
     sortH = sorted(sortH, key=lambda hamil: hamil[0])
   else:
-    sortH += [(get_distance(hamPath),hamPath)]
+    sortH += [(get_distance(args.hamiltonian),args.hamiltonian)]
 
   #####################################
   ######## Begin Main VQE Loop ########
@@ -124,7 +114,7 @@ def main(argv):
     for term in hamiltonian:
       for op in term[1]:
         qIndex = int(op[1])
-        if qIndex + 1 > numQubits:
+        if qIndex + 1 > args.qubits:
           print("The number of qubits given is too small to simulate this",
                 "molecule")
           sys.exit()
@@ -134,16 +124,16 @@ def main(argv):
 
     ### PRECOMPUTATION ###
     # Generate a circuit for the reference state
-    refCircuit = vqeTools.genRefState(refStateModule, numQubits, numElectrons)
+    refCircuit = vqeTools.genRefState(refStateModule, args.qubits, numElectrons)
     print('--reference circuit generated--')
 
     # Generate a circuit for measuring the energy
-    msrCircuits = vqeTools.genMeasure(hamiltonian, numQubits)
+    msrCircuits = vqeTools.genMeasure(hamiltonian, args.qubits)
     print('--measurement circuit generated--')
 
     ### VQE ###
-    print('--initiate {} optimization--'.format(optimizer))
-    final_energy = optimizeModule.minimizeEnergyObjective(hamiltonian, numQubits,
+    print('--initiate {} optimization--'.format(args.optimizer))
+    final_energy = optimizeModule.minimizeEnergyObjective(hamiltonian, args.qubits,
                                       ansatzModule, refCircuit, msrCircuits,
                                       prevParam, num_parameters)
 
@@ -155,15 +145,7 @@ def main(argv):
   end_time = time.time()
 
   # After VQE is finished - write results to file
-  if output_path == '':
-    for i, c in enumerate(hamPath):
-      if c == '/':
-        fname = 'Results/'
-        fname += hamPath[i+1:-1]+'_{}_to_{}'.format(sortH[0][0], sortH[-1][0])
-        fname += '.txt'
-        break
-  else:
-    fname = output_path
+  fname = args.output
   with open(fname,'w') as outf:
     for p in results:
       writeStr = '{0} {1}   '.format(str(p[0]).ljust(5),str(p[1][1]).rjust(20))
@@ -172,12 +154,12 @@ def main(argv):
       writeStr += '\n'
       outf.write(writeStr)
 
-  elapsed_time = end_time - start_time
-  timestr = time.strftime("%d:%H:%M:%S", time.gmtime(elapsed_time))
-  print('Elapsed time (D:H:M:S): ', timestr)
+  et = end_time - start_time
+  print('Elapsed time (H:M:S): {:02d}:{:02d}:{:02d}'.format(int(et // 3600),
+      int(et % 3600 // 60), int(et % 60)))
 
 if __name__ == "__main__":
-  main(sys.argv[1:])
+  main()
 
 
 
