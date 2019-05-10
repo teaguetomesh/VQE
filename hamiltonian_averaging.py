@@ -10,7 +10,6 @@ import sys
 import time
 import multiprocessing as mp
 from qiskit import BasicAer, execute
-from qiskit.providers.aer import QasmSimulator
 import visualization as vis
 import numpy as np
 
