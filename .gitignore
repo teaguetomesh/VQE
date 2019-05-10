@@ -10,4 +10,4 @@ Hamiltonians/molecule_data/
 Debugging_Measurement/
 main.sublime-workspace
 *.scaffold
-testing_measurement_correlations.py
+scratch/
