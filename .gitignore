@@ -9,3 +9,5 @@ Hamiltonians/molecule_data/
 */.DS_Store
 Debugging_Measurement/
 main.sublime-workspace
+*.scaffold
+scratch/
