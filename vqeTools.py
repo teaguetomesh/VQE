@@ -6,7 +6,9 @@ QuantumCircuits in a programmatic fashion.
 
 '''
 
+import os
 import sys
+import re
 import time
 import getopt
 import importlib
@@ -16,6 +18,7 @@ import random as rand
 import math
 from measureCircuit import genMeasureCircuit
 import hamiltonian_averaging as ha
+import glob
 
 # Parse the Hamiltonian
 # TO-DO: I should actually call the generate-H script so that I can generate
@@ -101,11 +104,26 @@ def hamiltonianAveraging(circList, H, Nq):
 
 def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuits):
     '''
+    Given 3 QuantumCircuits, concatenate them together into a single circuit.
     '''
     circList = []
     for n, tup in enumerate(msrCircuits):
       mC, name = tup
       fullCirc = refCircuit + ansCircuit + mC
+      
+      qasmCirc = fullCirc.qasm()
+      qasm_dir = 'Results/QASM_circuits/'
+      
+      if not os.path.isdir(qasm_dir):
+          os.mkdir(qasm_dir)
+          print('Directory {} created.'.format(qasm_dir))
+      
+      all_qasms = sorted(glob.glob(qasm_dir+'/*'))
+      last_num = len(all_qasms)+1
+      qasm_fn = qasm_dir + '{}_{}.qasm'.format(fullCirc.name,last_num)
+      with open(qasm_fn, 'w') as qfn:
+          print('Writing QASM to {}'.format(qasm_fn))
+          qfn.write(qasmCirc)
       #fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
       #  output='mpl', plot_barriers=False, reverse_bits=True)
       #sys.exit()
