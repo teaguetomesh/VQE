@@ -1,1 +1,1 @@
-python main.py --hamiltonian Hamiltonians/H2_6-31g_JW_OS0/AS3/ --refstate HartreeFock --ansatz UCCSD_Whitfield --qubits 6 --optimizer Nelder_Mead --output Results/profiling_mem.pec 2>&1 | tee Results/profiling_mem.out
+python main.py --hamiltonian Hamiltonians/H2_6-31g_JW_OS1/AS3/qubitH_H2_6-31g_JW_0.1.txt --refstate HartreeFock --ansatz UCCSD_Whitfield --qubits 6 --optimizer Nelder_Mead --output Results/ionic_H2_OS1_AS3_wMP.pec

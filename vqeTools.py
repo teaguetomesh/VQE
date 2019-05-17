@@ -106,27 +106,28 @@ def constructQuantumCircuit(refCircuit, ansCircuit, msrCircuits):
     '''
     Given 3 QuantumCircuits, concatenate them together into a single circuit.
     '''
+    print_circuit = False
     circList = []
     for n, tup in enumerate(msrCircuits):
       mC, name = tup
       fullCirc = refCircuit + ansCircuit + mC
+      if print_circuit:
+          qasmCirc = fullCirc.qasm()
+          qasm_dir = 'Results/QASM_circuits/'
       
-      qasmCirc = fullCirc.qasm()
-      qasm_dir = 'Results/QASM_circuits/'
+          if not os.path.isdir(qasm_dir):
+              os.mkdir(qasm_dir)
+              print('Directory {} created.'.format(qasm_dir))
       
-      if not os.path.isdir(qasm_dir):
-          os.mkdir(qasm_dir)
-          print('Directory {} created.'.format(qasm_dir))
-      
-      all_qasms = sorted(glob.glob(qasm_dir+'/*'))
-      last_num = len(all_qasms)+1
-      qasm_fn = qasm_dir + '{}_{}.qasm'.format(fullCirc.name,last_num)
-      with open(qasm_fn, 'w') as qfn:
-          print('Writing QASM to {}'.format(qasm_fn))
-          qfn.write(qasmCirc)
-      #fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
-      #  output='mpl', plot_barriers=False, reverse_bits=True)
-      #sys.exit()
+          all_qasms = sorted(glob.glob(qasm_dir+'/*'))
+          last_num = len(all_qasms)+1
+          qasm_fn = qasm_dir + '{}_{}.qasm'.format(fullCirc.name,last_num)
+          with open(qasm_fn, 'w') as qfn:
+              print('Writing QASM to {}'.format(qasm_fn))
+              qfn.write(qasmCirc)
+          #fullCirc.draw(scale=0.8, filename='measure_{0}_{1}_{2}'.format(ansCircuit.name,name,n), 
+          #  output='mpl', plot_barriers=False, reverse_bits=True)
+          #sys.exit()
       circList += [(fullCirc, name)]
     
     return circList
