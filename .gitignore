@@ -11,3 +11,4 @@ Debugging_Measurement/
 main.sublime-workspace
 *.scaffold
 scratch/
+vqe_env/
