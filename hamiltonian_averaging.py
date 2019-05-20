@@ -8,7 +8,8 @@ determine the expected energy of the given Hamiltonian.
 
 import sys
 import time
-import multiprocessing as mp
+#import multiprocessing as mp
+import queue
 from qiskit import BasicAer, execute
 import visualization as vis
 import numpy as np
@@ -172,7 +173,7 @@ def energyIntegration(H, terms, counts, termStrings):
     return (energySum / numShots)
 
 
-def fire(queue,tup,simulator,H,matching,termStrings):
+def fire(my_queue,tup,simulator,H,matching,termStrings):
     circ = tup[0]
     name = tup[1]
     #print('IN FIRE, CIRCNAME = {}'.format(name))
@@ -182,7 +183,7 @@ def fire(queue,tup,simulator,H,matching,termStrings):
       
     #vis.state_histogram(counts,'Naive Ansatz Counts: {} shots'.format(shots))
 
-    queue.put(energyIntegration(H, matching[name], counts, termStrings))
+    my_queue.put(energyIntegration(H, matching[name], counts, termStrings))
 
 
 def run(circList, H, Nq):
@@ -202,7 +203,7 @@ def run(circList, H, Nq):
         totalE (float): estimation for the expected energy
     '''
     #print('IN RUN, START TIME')
-    start_time = time.time()
+    #start_time = time.time()
     nameList = [t[1] for t in circList]
     matching, termStrings = matchTermToCircuit(nameList, H, Nq)
 
@@ -213,16 +214,12 @@ def run(circList, H, Nq):
     # The first term of the Hamiltonian is usually the identity operator with
     # coefficient in front. That coefficient is the starting point for
     # the energy calculation.
-    multiproc_output = mp.Queue()
-    processes = [mp.Process(target=fire,args=([multiproc_output,t,simulator,H,matching,termStrings])) for t in circList]
-    #print('IN HA, NUM PROCESSES = {}'.format(len(processes)))
-    #print('NUM CIRCUITS = {}'.format(len(circList)))
-    for p in processes:
-        p.start()
-    for p in processes:
-        p.join()
-    
-    results = [multiproc_output.get() for p in processes]
+
+    fire_queue = queue.Queue()
+    for c in circList:
+        fire(fire_queue,c,simulator,H,matching,termStrings)
+
+    results = [fire_queue.get() for c in circList]
     
     #print(results)
     #print(np.sum(results))
